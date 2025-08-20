@@ -91,6 +91,18 @@
             51%, 100% { opacity: 0.3; }
         }
         
+        .setup-form {
+            transition: all 0.5s ease;
+        }
+        .setup-form.hidden-setup {
+            opacity: 0;
+            transform: translateY(-20px);
+            height: 0;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        
         @media (max-width: 768px) {
             .mobile-padding { padding: 1rem; }
             .mobile-text { font-size: 0.875rem; }
@@ -140,7 +152,7 @@
             </div>
             
             <!-- Setup Google Sheets -->
-            <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
+            <div id="setupForm" class="setup-form mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
                 <h3 class="font-semibold text-blue-800 mb-2 flex items-center">
                     <span class="mr-2">⚙️</span>
                     Konfigurasi Google Sheets
@@ -155,11 +167,15 @@
                         <button onclick="saveSetup()" class="flex-1 btn-primary text-white py-2 px-3 rounded text-sm transition-all">
                             💾 Simpan
                         </button>
+                        <button onclick="showSetupForm()" id="showSetupBtn" class="hidden flex-1 bg-gray-600 text-white py-2 px-3 rounded text-sm hover:bg-gray-700 transition-colors">
+                            ⚙️ Setup
+                        </button>
                     </div>
                 </div>
                 <div class="mt-2 text-xs text-gray-600">
                     <p><strong>Nama Spreadsheet:</strong> "Presensi Tukang BAZNAS Banyuwangi"</p>
                     <p><strong>Sheets:</strong> Admin, Tukang, Presensi, Settings</p>
+                    <p><strong>Default Login:</strong> admin / admin123</p>
                 </div>
             </div>
         </div>
@@ -721,13 +737,52 @@
             showToast('Sistem presensi siap digunakan!', 'success');
         });
 
-        // Load saved URL
+        // Load saved URL and check if setup is completed
         function loadSavedUrl() {
             const savedUrl = localStorage.getItem('sheetsUrl');
+            const setupCompleted = localStorage.getItem('setupCompleted');
+            
             if (savedUrl) {
                 GOOGLE_SHEETS_URL = savedUrl;
                 document.getElementById('sheetsUrl').value = savedUrl;
                 checkConnection();
+                
+                // Hide setup form if already completed
+                if (setupCompleted === 'true') {
+                    hideSetupForm();
+                }
+            }
+        }
+
+        // Hide setup form
+        function hideSetupForm() {
+            const setupForm = document.getElementById('setupForm');
+            const showSetupBtn = document.getElementById('showSetupBtn');
+            
+            if (setupForm) {
+                setupForm.classList.add('hidden-setup');
+                setTimeout(() => {
+                    setupForm.style.display = 'none';
+                }, 500);
+            }
+            
+            if (showSetupBtn) {
+                showSetupBtn.classList.remove('hidden');
+            }
+        }
+
+        // Show setup form
+        function showSetupForm() {
+            const setupForm = document.getElementById('setupForm');
+            const showSetupBtn = document.getElementById('showSetupBtn');
+            
+            if (setupForm) {
+                setupForm.style.display = 'block';
+                setupForm.classList.remove('hidden-setup');
+            }
+            
+            if (showSetupBtn) {
+                showSetupBtn.classList.add('hidden');
             }
         }
 
@@ -808,7 +863,7 @@
                 const result = await response.json();
                 
                 if (!result.success) {
-                    throw new Error(result.error || 'Unknown error');
+                    throw new Error(result.error || result.message || 'Unknown error');
                 }
 
                 return result.data;
@@ -843,7 +898,7 @@
                 const result = await response.json();
                 
                 if (!result.success) {
-                    throw new Error(result.error || 'Unknown error');
+                    throw new Error(result.error || result.message || 'Unknown error');
                 }
 
                 return result;
@@ -861,14 +916,17 @@
                 // Load Admin data
                 const adminResult = await callGoogleSheetsAPI('getAdmin');
                 adminData = adminResult || [];
+                console.log('Admin data loaded:', adminData);
                 
                 // Load Tukang data
                 const tukangResult = await callGoogleSheetsAPI('getTukang');
                 tukangData = tukangResult || [];
+                console.log('Tukang data loaded:', tukangData);
                 
                 // Load Presensi data
                 const presensiResult = await callGoogleSheetsAPI('getPresensi');
                 presensiData = presensiResult || [];
+                console.log('Presensi data loaded:', presensiData);
                 
                 showToast('Data berhasil dimuat dari Google Sheets!', 'success');
                 return true;
@@ -899,25 +957,44 @@
                 });
                 
                 if (response.ok) {
-                    showToast('Koneksi berhasil! Google Sheets dapat diakses.', 'success');
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast('Koneksi berhasil! Google Sheets dapat diakses.', 'success');
+                        return true;
+                    } else {
+                        throw new Error(result.message || 'Connection test failed');
+                    }
                 } else {
                     throw new Error('Connection failed');
                 }
             } catch (error) {
                 showToast('Koneksi gagal. Periksa URL dan pastikan script sudah di-deploy dengan benar.', 'error');
+                return false;
             }
         }
 
-        function saveSetup() {
+        async function saveSetup() {
             const url = document.getElementById('sheetsUrl').value;
-            if (url) {
-                GOOGLE_SHEETS_URL = url;
-                localStorage.setItem('sheetsUrl', url);
-                checkConnection();
-                showToast('Konfigurasi Google Sheets berhasil disimpan!', 'success');
-            } else {
+            if (!url) {
                 showToast('Harap masukkan URL Google Apps Script!', 'error');
+                return;
             }
+
+            // Test connection first
+            const connectionOk = await testConnection();
+            if (!connectionOk) {
+                return;
+            }
+
+            GOOGLE_SHEETS_URL = url;
+            localStorage.setItem('sheetsUrl', url);
+            localStorage.setItem('setupCompleted', 'true');
+            checkConnection();
+            
+            // Hide setup form after successful save
+            hideSetupForm();
+            
+            showToast('Konfigurasi berhasil disimpan dan disembunyikan!', 'success');
         }
 
         // Connection Status
@@ -936,11 +1013,16 @@
                     });
                     
                     if (response.ok) {
-                        if (adminStatus) {
-                            adminStatus.innerHTML = '<div class="w-2 h-2 status-online rounded-full mr-2"></div><span>Terhubung</span>';
-                        }
-                        if (tukangStatus) {
-                            tukangStatus.innerHTML = '<div class="w-2 h-2 status-online rounded-full mr-2 online-indicator"></div><span>Online</span>';
+                        const result = await response.json();
+                        if (result.success) {
+                            if (adminStatus) {
+                                adminStatus.innerHTML = '<div class="w-2 h-2 status-online rounded-full mr-2"></div><span>Terhubung</span>';
+                            }
+                            if (tukangStatus) {
+                                tukangStatus.innerHTML = '<div class="w-2 h-2 status-online rounded-full mr-2 online-indicator"></div><span>Online</span>';
+                            }
+                        } else {
+                            throw new Error('Connection test failed');
                         }
                     } else {
                         throw new Error('Connection failed');
@@ -993,8 +1075,19 @@
                     throw new Error('Gagal memuat data dari Google Sheets');
                 }
 
-                // Check admin credentials
-                const admin = adminData.find(a => a.username === username && a.password === password);
+                // Debug login data
+                console.log('Login attempt:', { username, password });
+                console.log('Available admin data:', adminData);
+                console.log('Available tukang data:', tukangData);
+
+                // Check admin credentials with trimmed comparison
+                const admin = adminData.find(a => {
+                    const adminUsername = String(a.username || '').trim();
+                    const adminPassword = String(a.password || '').trim();
+                    console.log('Comparing admin:', { adminUsername, adminPassword, inputUsername: username, inputPassword: password });
+                    return adminUsername === username && adminPassword === password;
+                });
+                
                 if (admin) {
                     currentUser = { 
                         type: 'admin', 
@@ -1019,8 +1112,14 @@
                     return;
                 }
 
-                // Check tukang credentials
-                const tukang = tukangData.find(t => t.username === username && t.password === password);
+                // Check tukang credentials with trimmed comparison
+                const tukang = tukangData.find(t => {
+                    const tukangUsername = String(t.username || '').trim();
+                    const tukangPassword = String(t.password || '').trim();
+                    console.log('Comparing tukang:', { tukangUsername, tukangPassword, inputUsername: username, inputPassword: password });
+                    return tukangUsername === username && tukangPassword === password;
+                });
+                
                 if (tukang) {
                     currentUser = { type: 'tukang', data: tukang };
                     
@@ -2012,5 +2111,5 @@
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'972371b281f8e780',t:'MTc1NTcwOTE5OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9723d6028604e778',t:'MTc1NTcxMzMwNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
