@@ -83,6 +83,14 @@
             to { transform: translateX(0); opacity: 1; }
         }
         
+        .online-indicator {
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
         @media (max-width: 768px) {
             .mobile-padding { padding: 1rem; }
             .mobile-text { font-size: 0.875rem; }
@@ -131,129 +139,27 @@
                 </button>
             </div>
             
-            <!-- Demo Login Info -->
+            <!-- Setup Google Sheets -->
             <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
                 <h3 class="font-semibold text-blue-800 mb-2 flex items-center">
-                    <span class="mr-2">🎮</span>
-                    Demo Login
-                </h3>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-white p-2 rounded border">
-                        <p><strong>Admin:</strong></p>
-                        <p>admin / admin123</p>
-                    </div>
-                    <div class="bg-white p-2 rounded border">
-                        <p><strong>Tukang:</strong></p>
-                        <p>tukang1 / tukang123</p>
-                    </div>
-                </div>
-                <div class="mt-3 flex space-x-2">
-                    <button onclick="showSetupModal()" class="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors">
-                        ⚙️ Setup Google Sheets
-                    </button>
-                    <button onclick="exportDemoData()" class="flex-1 bg-green-600 text-white py-2 px-3 rounded text-sm hover:bg-green-700 transition-colors">
-                        📊 Export Demo
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Setup Modal -->
-    <div id="setupModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
                     <span class="mr-2">⚙️</span>
-                    Setup Google Sheets Integration
+                    Konfigurasi Google Sheets
                 </h3>
-                <button onclick="hideSetupModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <span class="text-xl">×</span>
-                </button>
-            </div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Google Apps Script Web App URL</label>
-                        <input type="url" id="sheetsUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" 
-                               placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
-                        <p class="text-xs text-gray-500 mt-1">URL dari Google Apps Script yang sudah di-deploy</p>
-                    </div>
-                    
+                <div class="space-y-2">
+                    <input type="url" id="sheetsUrl" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" 
+                           placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
                     <div class="flex space-x-2">
-                        <button onclick="testConnection()" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                            🔍 Test Koneksi
+                        <button onclick="testConnection()" class="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors">
+                            🔍 Test
                         </button>
-                        <button onclick="saveSetup()" class="flex-1 btn-primary text-white py-2 rounded-lg transition-all">
+                        <button onclick="saveSetup()" class="flex-1 btn-primary text-white py-2 px-3 rounded text-sm transition-all">
                             💾 Simpan
                         </button>
                     </div>
                 </div>
-                
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-medium text-gray-800 mb-2 flex items-center">
-                        <span class="mr-2">📝</span>
-                        Copy Script ini ke Google Apps Script:
-                    </h4>
-                    <textarea readonly class="w-full h-64 text-xs bg-gray-100 p-3 rounded border font-mono resize-none" onclick="this.select()">
-function doPost(e) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const data = JSON.parse(e.postData.contents);
-    
-    if (data.action === 'addPresensi') {
-      let sheet = ss.getSheetByName('Presensi');
-      if (!sheet) {
-        sheet = ss.insertSheet('Presensi');
-        sheet.getRange(1, 1, 1, 8).setValues([['Timestamp', 'Tukang ID', 'Nama', 'Jam Masuk', 'Jam Keluar', 'Status', 'Lokasi', 'Tanggal']]);
-      }
-      
-      sheet.appendRow([
-        new Date(),
-        data.tukangId,
-        data.nama,
-        data.jamMasuk,
-        data.jamKeluar || '',
-        data.status,
-        data.lokasi,
-        data.tanggal
-      ]);
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({success: true, message: 'Data saved'}));
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({success: false, error: error.toString()}));
-  }
-}
-
-function doGet(e) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const action = e.parameter.action;
-    
-    if (action === 'getPresensi') {
-      const sheet = ss.getSheetByName('Presensi');
-      if (sheet) {
-        const data = sheet.getDataRange().getValues();
-        return ContentService.createTextOutput(JSON.stringify({success: true, data: data}));
-      }
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({success: true, message: 'Connected'}));
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({success: false, error: error.toString()}));
-  }
-}
-                    </textarea>
-                    <div class="mt-2 text-xs text-gray-500 space-y-1">
-                        <p><strong>Langkah Deploy:</strong></p>
-                        <p>1. Buka script.google.com → New Project</p>
-                        <p>2. Paste script di atas</p>
-                        <p>3. Deploy → New Deployment → Web App</p>
-                        <p>4. Execute as: Me, Access: Anyone</p>
-                        <p>5. Copy URL dan paste di form</p>
-                    </div>
+                <div class="mt-2 text-xs text-gray-600">
+                    <p><strong>Nama Spreadsheet:</strong> "Presensi Tukang BAZNAS Banyuwangi"</p>
+                    <p><strong>Sheets:</strong> Admin, Tukang, Presensi, Settings</p>
                 </div>
             </div>
         </div>
@@ -278,6 +184,10 @@ function doGet(e) {
                         <div id="connectionStatus" class="flex items-center text-sm">
                             <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
                             <span>Offline</span>
+                        </div>
+                        <div id="onlineUsers" class="flex items-center text-sm bg-green-50 px-3 py-1 rounded-full">
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2 online-indicator"></div>
+                            <span id="onlineCount">0</span> Online
                         </div>
                         <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
                             Keluar
@@ -349,8 +259,14 @@ function doGet(e) {
                         <button onclick="showTab('tukang')" id="tabTukang" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">
                             👷 Data Tukang
                         </button>
+                        <button onclick="showTab('admin')" id="tabAdmin" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">
+                            👨‍💼 Data Admin
+                        </button>
+                        <button onclick="showTab('monitoring')" id="tabMonitoring" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">
+                            📊 Monitoring
+                        </button>
                         <button onclick="showTab('laporan')" id="tabLaporan" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">
-                            📊 Laporan
+                            📈 Laporan
                         </button>
                         <button onclick="showTab('export')" id="tabExport" class="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">
                             💾 Export Data
@@ -369,10 +285,6 @@ function doGet(e) {
                             <button onclick="refreshData()" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
                                 <span>🔄</span>
                                 <span class="ml-1">Refresh</span>
-                            </button>
-                            <button onclick="syncFromGoogleSheets()" class="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center text-sm">
-                                <span>📥</span>
-                                <span class="ml-1">Sync</span>
                             </button>
                         </div>
                     </div>
@@ -412,6 +324,54 @@ function doGet(e) {
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="tukangGrid">
                         <div class="text-center py-8 col-span-full">
                             <p class="text-gray-500">Memuat data tukang...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Admin Tab -->
+                <div id="adminTab" class="p-6 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Data Admin</h2>
+                            <p class="text-sm text-gray-600 mt-1">Kelola akun administrator sistem</p>
+                        </div>
+                        <button onclick="showAddAdminModal()" class="btn-primary text-white px-4 py-2 rounded-lg transition-all">
+                            + Tambah Admin
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="adminGrid">
+                        <div class="text-center py-8 col-span-full">
+                            <p class="text-gray-500">Memuat data admin...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitoring Tab -->
+                <div id="monitoringTab" class="p-6 hidden">
+                    <div class="mb-6">
+                        <h2 class="text-lg font-semibold text-gray-900">Real-time Monitoring</h2>
+                        <p class="text-sm text-gray-600 mt-1">Monitor aktivitas pengguna secara real-time</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Online Users -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-2 online-indicator"></div>
+                                Pengguna Online
+                            </h3>
+                            <div id="onlineUsersList" class="space-y-3">
+                                <div class="text-center text-gray-500 py-4">Tidak ada pengguna online</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activities -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Aktivitas Terbaru</h3>
+                            <div id="recentActivities" class="space-y-3">
+                                <div class="text-center text-gray-500 py-4">Belum ada aktivitas</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -505,15 +465,15 @@ function doGet(e) {
                                 <span class="font-medium">Print Laporan</span>
                                 <span class="text-xs opacity-75">Cetak langsung</span>
                             </button>
+                            <button onclick="syncToGoogleSheets()" class="bg-purple-600 text-white py-4 px-6 rounded-lg hover:bg-purple-700 transition-colors flex flex-col items-center space-y-2 card-hover">
+                                <span class="text-2xl">☁️</span>
+                                <span class="font-medium">Sync ke Sheets</span>
+                                <span class="text-xs opacity-75">Google Sheets</span>
+                            </button>
                             <button onclick="backupData()" class="bg-yellow-600 text-white py-4 px-6 rounded-lg hover:bg-yellow-700 transition-colors flex flex-col items-center space-y-2 card-hover">
                                 <span class="text-2xl">💾</span>
                                 <span class="font-medium">Backup Data</span>
                                 <span class="text-xs opacity-75">File .json</span>
-                            </button>
-                            <button onclick="restoreData()" class="bg-indigo-600 text-white py-4 px-6 rounded-lg hover:bg-indigo-700 transition-colors flex flex-col items-center space-y-2 card-hover">
-                                <span class="text-2xl">📥</span>
-                                <span class="font-medium">Restore Data</span>
-                                <span class="text-xs opacity-75">Import backup</span>
                             </button>
                         </div>
                     </div>
@@ -539,8 +499,8 @@ function doGet(e) {
                     </div>
                     <div class="flex items-center space-x-4">
                         <div id="tukangConnectionStatus" class="flex items-center text-sm">
-                            <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-                            <span>Offline</span>
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2 online-indicator"></div>
+                            <span>Online</span>
                         </div>
                         <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
                             Keluar
@@ -642,6 +602,11 @@ function doGet(e) {
                 </div>
                 
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="newTukangPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Masukkan password">
+                </div>
+                
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">No. Telepon</label>
                     <input type="tel" id="newTukangPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="08xxxxxxxxxx">
                 </div>
@@ -663,6 +628,60 @@ function doGet(e) {
         </div>
     </div>
 
+    <!-- Modal Tambah Admin -->
+    <div id="addAdminModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <span class="mr-2">👨‍💼</span>
+                    Tambah Admin Baru
+                </h3>
+                <button onclick="hideAddAdminModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <span class="text-xl">×</span>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap</label>
+                    <input type="text" id="newAdminName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Masukkan nama lengkap">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="newAdminUsername" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Masukkan username">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="newAdminPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Masukkan password">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="newAdminEmail" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="admin@baznas.org">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select id="newAdminRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        <option value="Admin">Admin</option>
+                        <option value="Super Admin">Super Admin</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4 mt-6">
+                <button onclick="hideAddAdminModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                    Batal
+                </button>
+                <button onclick="addAdmin()" class="flex-1 btn-primary text-white py-2 rounded-lg transition-all">
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Configuration
         let GOOGLE_SHEETS_URL = localStorage.getItem('sheetsUrl') || '';
@@ -672,6 +691,8 @@ function doGet(e) {
         let tukangData = [];
         let adminData = [];
         let presensiData = [];
+        let onlineUsers = new Set();
+        let activities = [];
         let currentTab = 'presensi';
 
         // Initialize
@@ -680,9 +701,7 @@ function doGet(e) {
             
             updateCurrentDate();
             updateCurrentDateTime();
-            checkConnection();
-            loadLocalData();
-            generateDemoData();
+            loadSavedUrl();
             
             // Set default date filters
             const now = new Date();
@@ -697,9 +716,20 @@ function doGet(e) {
             
             setInterval(updateCurrentDateTime, 1000);
             setInterval(checkConnection, 30000);
+            setInterval(updateOnlineStatus, 5000);
             
             showToast('Sistem presensi siap digunakan!', 'success');
         });
+
+        // Load saved URL
+        function loadSavedUrl() {
+            const savedUrl = localStorage.getItem('sheetsUrl');
+            if (savedUrl) {
+                GOOGLE_SHEETS_URL = savedUrl;
+                document.getElementById('sheetsUrl').value = savedUrl;
+                checkConnection();
+            }
+        }
 
         // Toast Notifications
         function showToast(message, type = 'info', duration = 3000) {
@@ -750,91 +780,143 @@ function doGet(e) {
             }
         }
 
-        // Generate demo data
-        function generateDemoData() {
-            // Demo admin data
-            if (adminData.length === 0) {
-                adminData = [
-                    { username: 'admin', password: 'admin123', name: 'Administrator', email: 'admin@baznas-banyuwangi.org', role: 'Super Admin' }
-                ];
+        // Google Sheets API Functions
+        async function callGoogleSheetsAPI(action, data = {}) {
+            if (!GOOGLE_SHEETS_URL) {
+                throw new Error('Google Sheets URL belum dikonfigurasi');
             }
-            
-            // Demo tukang data
-            if (tukangData.length === 0) {
-                tukangData = [
-                    { id: 1, name: 'Ahmad Suharto', username: 'tukang1', phone: '081234567890', address: 'Jl. Merdeka No. 123, Banyuwangi', password: 'tukang123' },
-                    { id: 2, name: 'Budi Santoso', username: 'tukang2', phone: '081234567891', address: 'Jl. Sudirman No. 456, Banyuwangi', password: 'tukang123' },
-                    { id: 3, name: 'Candra Wijaya', username: 'tukang3', phone: '081234567892', address: 'Jl. Gatot Subroto No. 789, Banyuwangi', password: 'tukang123' },
-                    { id: 4, name: 'Dedi Kurniawan', username: 'tukang4', phone: '081234567893', address: 'Jl. Ahmad Yani No. 321, Banyuwangi', password: 'tukang123' },
-                    { id: 5, name: 'Eko Prasetyo', username: 'tukang5', phone: '081234567894', address: 'Jl. Diponegoro No. 654, Banyuwangi', password: 'tukang123' }
-                ];
-            }
-            
-            // Generate sample presensi data
-            if (presensiData.length === 0) {
-                const today = new Date();
-                const sampleData = [];
+
+            try {
+                const url = new URL(GOOGLE_SHEETS_URL);
+                url.searchParams.append('action', action);
                 
-                // Generate data for last 7 days
-                for (let i = 0; i < 7; i++) {
-                    const date = new Date(today);
-                    date.setDate(date.getDate() - i);
-                    
-                    tukangData.forEach((tukang, index) => {
-                        // 80% chance of attendance
-                        if (Math.random() > 0.2) {
-                            const jamMasuk = new Date(date);
-                            jamMasuk.setHours(7 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60));
-                            
-                            const jamKeluar = new Date(jamMasuk);
-                            jamKeluar.setHours(jamKeluar.getHours() + 8 + Math.floor(Math.random() * 2));
-                            
-                            const status = jamMasuk.getHours() > 8 || (jamMasuk.getHours() === 8 && jamMasuk.getMinutes() > 0) ? 'Terlambat' : 'Hadir';
-                            
-                            sampleData.push({
-                                id: sampleData.length + 1,
-                                tukangId: tukang.id,
-                                nama: tukang.name,
-                                date: date,
-                                jamMasuk: jamMasuk.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                                jamKeluar: jamKeluar.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                                status: status,
-                                lokasi: `-8.2${Math.floor(Math.random() * 10)}${Math.floor(Math.random() * 10)}${Math.floor(Math.random() * 10)}, 114.3${Math.floor(Math.random() * 10)}${Math.floor(Math.random() * 10)}${Math.floor(Math.random() * 10)}`,
-                                tanggal: date.toLocaleDateString('id-ID')
-                            });
-                        }
+                if (Object.keys(data).length > 0) {
+                    Object.keys(data).forEach(key => {
+                        url.searchParams.append(key, data[key]);
                     });
                 }
+
+                const response = await fetch(url.toString(), {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
                 
-                presensiData = sampleData;
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error');
+                }
+
+                return result.data;
+            } catch (error) {
+                console.error('Google Sheets API Error:', error);
+                throw error;
             }
-            
-            saveLocalData();
-            console.log('Demo data generated');
         }
 
-        // Google Sheets Integration
-        async function sendToGoogleSheets(data) {
+        async function postToGoogleSheets(action, data) {
             if (!GOOGLE_SHEETS_URL) {
-                console.log('Google Sheets URL not configured');
-                return false;
+                throw new Error('Google Sheets URL belum dikonfigurasi');
             }
 
             try {
                 const response = await fetch(GOOGLE_SHEETS_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
+                    mode: 'cors',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({
+                        action: action,
+                        ...data
+                    })
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
                 
-                console.log('Data sent to Google Sheets successfully');
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error');
+                }
+
+                return result;
+            } catch (error) {
+                console.error('Google Sheets POST Error:', error);
+                throw error;
+            }
+        }
+
+        // Load data from Google Sheets
+        async function loadDataFromSheets() {
+            try {
+                showToast('Memuat data dari Google Sheets...', 'info');
+                
+                // Load Admin data
+                const adminResult = await callGoogleSheetsAPI('getAdmin');
+                adminData = adminResult || [];
+                
+                // Load Tukang data
+                const tukangResult = await callGoogleSheetsAPI('getTukang');
+                tukangData = tukangResult || [];
+                
+                // Load Presensi data
+                const presensiResult = await callGoogleSheetsAPI('getPresensi');
+                presensiData = presensiResult || [];
+                
+                showToast('Data berhasil dimuat dari Google Sheets!', 'success');
                 return true;
             } catch (error) {
-                console.error('Error sending to Google Sheets:', error);
+                console.error('Error loading data from sheets:', error);
+                showToast('Gagal memuat data dari Google Sheets: ' + error.message, 'error');
                 return false;
+            }
+        }
+
+        // Setup Functions
+        async function testConnection() {
+            const url = document.getElementById('sheetsUrl').value;
+            if (!url) {
+                showToast('Harap masukkan URL Google Apps Script terlebih dahulu!', 'error');
+                return;
+            }
+
+            try {
+                showToast('Testing koneksi...', 'info');
+                
+                const testUrl = new URL(url);
+                testUrl.searchParams.append('action', 'test');
+                
+                const response = await fetch(testUrl.toString(), { 
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    showToast('Koneksi berhasil! Google Sheets dapat diakses.', 'success');
+                } else {
+                    throw new Error('Connection failed');
+                }
+            } catch (error) {
+                showToast('Koneksi gagal. Periksa URL dan pastikan script sudah di-deploy dengan benar.', 'error');
+            }
+        }
+
+        function saveSetup() {
+            const url = document.getElementById('sheetsUrl').value;
+            if (url) {
+                GOOGLE_SHEETS_URL = url;
+                localStorage.setItem('sheetsUrl', url);
+                checkConnection();
+                showToast('Konfigurasi Google Sheets berhasil disimpan!', 'success');
+            } else {
+                showToast('Harap masukkan URL Google Apps Script!', 'error');
             }
         }
 
@@ -845,16 +927,23 @@ function doGet(e) {
             
             if (GOOGLE_SHEETS_URL) {
                 try {
-                    const response = await fetch(GOOGLE_SHEETS_URL + '?action=ping', { 
+                    const testUrl = new URL(GOOGLE_SHEETS_URL);
+                    testUrl.searchParams.append('action', 'test');
+                    
+                    const response = await fetch(testUrl.toString(), { 
                         method: 'GET',
-                        mode: 'no-cors'
+                        mode: 'cors'
                     });
                     
-                    if (adminStatus) {
-                        adminStatus.innerHTML = '<div class="w-2 h-2 status-online rounded-full mr-2"></div><span>Terhubung</span>';
-                    }
-                    if (tukangStatus) {
-                        tukangStatus.innerHTML = '<div class="w-2 h-2 status-online rounded-full mr-2"></div><span>Online</span>';
+                    if (response.ok) {
+                        if (adminStatus) {
+                            adminStatus.innerHTML = '<div class="w-2 h-2 status-online rounded-full mr-2"></div><span>Terhubung</span>';
+                        }
+                        if (tukangStatus) {
+                            tukangStatus.innerHTML = '<div class="w-2 h-2 status-online rounded-full mr-2 online-indicator"></div><span>Online</span>';
+                        }
+                    } else {
+                        throw new Error('Connection failed');
                     }
                 } catch (error) {
                     if (adminStatus) {
@@ -874,88 +963,6 @@ function doGet(e) {
             }
         }
 
-        // Setup Functions
-        function showSetupModal() {
-            document.getElementById('setupModal').classList.remove('hidden');
-            document.getElementById('sheetsUrl').value = GOOGLE_SHEETS_URL;
-        }
-
-        function hideSetupModal() {
-            document.getElementById('setupModal').classList.add('hidden');
-        }
-
-        async function testConnection() {
-            const url = document.getElementById('sheetsUrl').value;
-            if (!url) {
-                showToast('Harap masukkan URL Google Apps Script terlebih dahulu!', 'error');
-                return;
-            }
-
-            try {
-                showToast('Testing koneksi...', 'info');
-                const response = await fetch(url + '?action=ping', { 
-                    method: 'GET',
-                    mode: 'no-cors'
-                });
-                showToast('Koneksi berhasil! Google Sheets dapat diakses.', 'success');
-            } catch (error) {
-                showToast('Koneksi gagal. Periksa URL dan pastikan script sudah di-deploy dengan benar.', 'error');
-            }
-        }
-
-        function saveSetup() {
-            const url = document.getElementById('sheetsUrl').value;
-            if (url) {
-                GOOGLE_SHEETS_URL = url;
-                localStorage.setItem('sheetsUrl', url);
-                hideSetupModal();
-                checkConnection();
-                showToast('Konfigurasi Google Sheets berhasil disimpan!', 'success');
-            } else {
-                showToast('Harap masukkan URL Google Apps Script!', 'error');
-            }
-        }
-
-        // Data Management
-        function saveLocalData() {
-            try {
-                localStorage.setItem('presensiData', JSON.stringify(presensiData));
-                localStorage.setItem('tukangData', JSON.stringify(tukangData));
-                localStorage.setItem('adminData', JSON.stringify(adminData));
-                console.log('Data saved to localStorage');
-            } catch (error) {
-                console.error('Error saving to localStorage:', error);
-                showToast('Error menyimpan data lokal', 'error');
-            }
-        }
-
-        function loadLocalData() {
-            try {
-                const savedPresensi = localStorage.getItem('presensiData');
-                const savedTukang = localStorage.getItem('tukangData');
-                const savedAdmin = localStorage.getItem('adminData');
-                
-                if (savedPresensi) {
-                    presensiData = JSON.parse(savedPresensi);
-                    presensiData.forEach(p => {
-                        if (typeof p.date === 'string') {
-                            p.date = new Date(p.date);
-                        }
-                    });
-                }
-                if (savedTukang) {
-                    tukangData = JSON.parse(savedTukang);
-                }
-                if (savedAdmin) {
-                    adminData = JSON.parse(savedAdmin);
-                }
-                console.log('Data loaded from localStorage');
-            } catch (error) {
-                console.error('Error loading from localStorage:', error);
-                showToast('Error memuat data lokal', 'error');
-            }
-        }
-
         // Authentication
         async function login() {
             const username = document.getElementById('username').value.trim();
@@ -969,15 +976,23 @@ function doGet(e) {
                 return;
             }
 
+            if (!GOOGLE_SHEETS_URL) {
+                showToast('Harap konfigurasi Google Sheets terlebih dahulu!', 'error');
+                return;
+            }
+
             // Show loading
             loginText.textContent = 'Memverifikasi...';
             loginLoading.classList.remove('hidden');
             loginBtn.disabled = true;
 
-            // Simulate loading delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
             try {
+                // Load data from Google Sheets
+                const dataLoaded = await loadDataFromSheets();
+                if (!dataLoaded) {
+                    throw new Error('Gagal memuat data dari Google Sheets');
+                }
+
                 // Check admin credentials
                 const admin = adminData.find(a => a.username === username && a.password === password);
                 if (admin) {
@@ -989,6 +1004,16 @@ function doGet(e) {
                         role: admin.role
                     };
                     
+                    // Add to online users
+                    onlineUsers.add({
+                        type: 'admin',
+                        name: admin.name,
+                        loginTime: new Date()
+                    });
+                    
+                    // Log activity
+                    logActivity('Login', `Admin ${admin.name} masuk ke sistem`);
+                    
                     showAdminPage();
                     showToast(`Selamat datang, ${admin.name}!`, 'success');
                     return;
@@ -998,6 +1023,16 @@ function doGet(e) {
                 const tukang = tukangData.find(t => t.username === username && t.password === password);
                 if (tukang) {
                     currentUser = { type: 'tukang', data: tukang };
+                    
+                    // Add to online users
+                    onlineUsers.add({
+                        type: 'tukang',
+                        name: tukang.name,
+                        loginTime: new Date()
+                    });
+                    
+                    // Log activity
+                    logActivity('Login', `Tukang ${tukang.name} masuk ke sistem`);
                     
                     showTukangPage();
                     showToast(`Selamat datang, ${tukang.name}!`, 'success');
@@ -1017,6 +1052,20 @@ function doGet(e) {
         }
 
         function logout() {
+            if (currentUser) {
+                // Remove from online users
+                onlineUsers.forEach(user => {
+                    if ((currentUser.type === 'admin' && user.name === currentUser.name) ||
+                        (currentUser.type === 'tukang' && user.name === currentUser.data.name)) {
+                        onlineUsers.delete(user);
+                    }
+                });
+                
+                // Log activity
+                const userName = currentUser.type === 'admin' ? currentUser.name : currentUser.data.name;
+                logActivity('Logout', `${currentUser.type === 'admin' ? 'Admin' : 'Tukang'} ${userName} keluar dari sistem`);
+            }
+            
             currentUser = null;
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('adminPage').classList.add('hidden');
@@ -1024,6 +1073,100 @@ function doGet(e) {
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
             showToast('Anda telah logout', 'info');
+        }
+
+        // Activity Logging
+        function logActivity(type, description) {
+            activities.unshift({
+                id: Date.now(),
+                type: type,
+                description: description,
+                timestamp: new Date(),
+                user: currentUser ? (currentUser.type === 'admin' ? currentUser.name : currentUser.data.name) : 'System'
+            });
+            
+            // Keep only last 50 activities
+            if (activities.length > 50) {
+                activities = activities.slice(0, 50);
+            }
+            
+            updateRecentActivities();
+        }
+
+        // Online Status Management
+        function updateOnlineStatus() {
+            if (currentUser) {
+                // Update online indicator for current user
+                const now = new Date();
+                onlineUsers.forEach(user => {
+                    if ((currentUser.type === 'admin' && user.name === currentUser.name) ||
+                        (currentUser.type === 'tukang' && user.name === currentUser.data.name)) {
+                        user.lastSeen = now;
+                    }
+                });
+                
+                updateOnlineUsersList();
+            }
+        }
+
+        function updateOnlineUsersList() {
+            const container = document.getElementById('onlineUsersList');
+            const countElement = document.getElementById('onlineCount');
+            
+            if (!container || !countElement) return;
+            
+            const onlineArray = Array.from(onlineUsers);
+            countElement.textContent = onlineArray.length;
+            
+            if (onlineArray.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-4">Tidak ada pengguna online</div>';
+                return;
+            }
+            
+            container.innerHTML = onlineArray.map(user => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                            <span class="text-green-600 text-sm font-medium">${user.name.charAt(0)}</span>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">${user.name}</p>
+                            <p class="text-xs text-gray-500">${user.type === 'admin' ? 'Administrator' : 'Tukang'}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2 online-indicator"></div>
+                        <span class="text-xs text-gray-500">Online</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateRecentActivities() {
+            const container = document.getElementById('recentActivities');
+            if (!container) return;
+            
+            if (activities.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-4">Belum ada aktivitas</div>';
+                return;
+            }
+            
+            container.innerHTML = activities.slice(0, 10).map(activity => `
+                <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-blue-600 text-xs">
+                            ${activity.type === 'Login' ? '🔑' : 
+                              activity.type === 'Logout' ? '🚪' : 
+                              activity.type === 'Presensi' ? '✅' : '📝'}
+                        </span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900">${activity.type}</p>
+                        <p class="text-xs text-gray-600">${activity.description}</p>
+                        <p class="text-xs text-gray-400 mt-1">${activity.timestamp.toLocaleString('id-ID')}</p>
+                    </div>
+                </div>
+            `).join('');
         }
 
         // Page Navigation
@@ -1035,6 +1178,9 @@ function doGet(e) {
                 updateAdminStats();
                 loadPresensiTable();
                 loadTukangGrid();
+                loadAdminGrid();
+                updateOnlineUsersList();
+                updateRecentActivities();
                 checkConnection();
             }, 100);
         }
@@ -1082,6 +1228,11 @@ function doGet(e) {
                 loadPresensiTable();
             } else if (tabName === 'tukang') {
                 loadTukangGrid();
+            } else if (tabName === 'admin') {
+                loadAdminGrid();
+            } else if (tabName === 'monitoring') {
+                updateOnlineUsersList();
+                updateRecentActivities();
             } else if (tabName === 'laporan') {
                 filterLaporan();
             }
@@ -1169,6 +1320,42 @@ function doGet(e) {
             `).join('');
         }
 
+        function loadAdminGrid() {
+            const grid = document.getElementById('adminGrid');
+            
+            if (adminData.length === 0) {
+                grid.innerHTML = '<div class="text-center py-8 col-span-full"><p class="text-gray-500">Belum ada data admin</p></div>';
+                return;
+            }
+            
+            grid.innerHTML = adminData.map(admin => `
+                <div class="bg-white rounded-lg shadow-sm p-6 card-hover border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-blue-600 font-semibold">${admin.name.charAt(0)}</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">${admin.name}</h3>
+                            <p class="text-sm text-gray-600">${admin.role}</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <p class="text-gray-600"><span class="font-medium">Username:</span> ${admin.username}</p>
+                        <p class="text-gray-600"><span class="font-medium">Email:</span> ${admin.email}</p>
+                    </div>
+                    <div class="mt-4 flex space-x-2">
+                        <button onclick="editAdmin('${admin.username}')" class="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors">
+                            Edit
+                        </button>
+                        <button onclick="deleteAdmin('${admin.username}')" class="flex-1 bg-red-600 text-white py-2 px-3 rounded text-sm hover:bg-red-700 transition-colors">
+                            Hapus
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Modal Functions
         function showAddTukangModal() {
             document.getElementById('addTukangModal').classList.remove('hidden');
         }
@@ -1178,17 +1365,34 @@ function doGet(e) {
             // Clear form
             document.getElementById('newTukangName').value = '';
             document.getElementById('newTukangUsername').value = '';
+            document.getElementById('newTukangPassword').value = '';
             document.getElementById('newTukangPhone').value = '';
             document.getElementById('newTukangAddress').value = '';
         }
 
-        function addTukang() {
+        function showAddAdminModal() {
+            document.getElementById('addAdminModal').classList.remove('hidden');
+        }
+
+        function hideAddAdminModal() {
+            document.getElementById('addAdminModal').classList.add('hidden');
+            // Clear form
+            document.getElementById('newAdminName').value = '';
+            document.getElementById('newAdminUsername').value = '';
+            document.getElementById('newAdminPassword').value = '';
+            document.getElementById('newAdminEmail').value = '';
+            document.getElementById('newAdminRole').value = 'Admin';
+        }
+
+        // CRUD Functions
+        async function addTukang() {
             const name = document.getElementById('newTukangName').value.trim();
             const username = document.getElementById('newTukangUsername').value.trim();
+            const password = document.getElementById('newTukangPassword').value.trim();
             const phone = document.getElementById('newTukangPhone').value.trim();
             const address = document.getElementById('newTukangAddress').value.trim();
 
-            if (!name || !username || !phone || !address) {
+            if (!name || !username || !password || !phone || !address) {
                 showToast('Harap isi semua field!', 'error');
                 return;
             }
@@ -1199,37 +1403,129 @@ function doGet(e) {
                 return;
             }
 
-            const newTukang = {
-                id: Math.max(...tukangData.map(t => t.id), 0) + 1,
-                name: name,
-                username: username,
-                phone: phone,
-                address: address,
-                password: 'tukang123' // Default password
-            };
+            try {
+                const newTukang = {
+                    id: Math.max(...tukangData.map(t => t.id), 0) + 1,
+                    name: name,
+                    username: username,
+                    password: password,
+                    phone: phone,
+                    address: address
+                };
 
-            tukangData.push(newTukang);
-            saveLocalData();
-            loadTukangGrid();
-            updateAdminStats();
-            hideAddTukangModal();
-            showToast('Tukang berhasil ditambahkan!', 'success');
+                // Save to Google Sheets
+                await postToGoogleSheets('addTukang', newTukang);
+                
+                tukangData.push(newTukang);
+                loadTukangGrid();
+                updateAdminStats();
+                hideAddTukangModal();
+                
+                logActivity('CRUD', `Admin menambahkan tukang baru: ${name}`);
+                showToast('Tukang berhasil ditambahkan!', 'success');
+            } catch (error) {
+                showToast('Gagal menambahkan tukang: ' + error.message, 'error');
+            }
+        }
+
+        async function addAdmin() {
+            const name = document.getElementById('newAdminName').value.trim();
+            const username = document.getElementById('newAdminUsername').value.trim();
+            const password = document.getElementById('newAdminPassword').value.trim();
+            const email = document.getElementById('newAdminEmail').value.trim();
+            const role = document.getElementById('newAdminRole').value;
+
+            if (!name || !username || !password || !email) {
+                showToast('Harap isi semua field!', 'error');
+                return;
+            }
+
+            // Check if username already exists
+            if (adminData.find(a => a.username === username)) {
+                showToast('Username sudah digunakan!', 'error');
+                return;
+            }
+
+            try {
+                const newAdmin = {
+                    name: name,
+                    username: username,
+                    password: password,
+                    email: email,
+                    role: role
+                };
+
+                // Save to Google Sheets
+                await postToGoogleSheets('addAdmin', newAdmin);
+                
+                adminData.push(newAdmin);
+                loadAdminGrid();
+                hideAddAdminModal();
+                
+                logActivity('CRUD', `Admin menambahkan admin baru: ${name}`);
+                showToast('Admin berhasil ditambahkan!', 'success');
+            } catch (error) {
+                showToast('Gagal menambahkan admin: ' + error.message, 'error');
+            }
         }
 
         function editTukang(id) {
             const tukang = tukangData.find(t => t.id === id);
             if (tukang) {
                 showToast(`Edit tukang: ${tukang.name}`, 'info');
+                // Implementation for edit modal
             }
         }
 
-        function deleteTukang(id) {
+        function editAdmin(username) {
+            const admin = adminData.find(a => a.username === username);
+            if (admin) {
+                showToast(`Edit admin: ${admin.name}`, 'info');
+                // Implementation for edit modal
+            }
+        }
+
+        async function deleteTukang(id) {
             if (confirm('Apakah Anda yakin ingin menghapus tukang ini?')) {
-                tukangData = tukangData.filter(t => t.id !== id);
-                saveLocalData();
-                loadTukangGrid();
-                updateAdminStats();
-                showToast('Tukang berhasil dihapus!', 'success');
+                try {
+                    const tukang = tukangData.find(t => t.id === id);
+                    
+                    // Delete from Google Sheets
+                    await postToGoogleSheets('deleteTukang', { id: id });
+                    
+                    tukangData = tukangData.filter(t => t.id !== id);
+                    loadTukangGrid();
+                    updateAdminStats();
+                    
+                    logActivity('CRUD', `Admin menghapus tukang: ${tukang.name}`);
+                    showToast('Tukang berhasil dihapus!', 'success');
+                } catch (error) {
+                    showToast('Gagal menghapus tukang: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function deleteAdmin(username) {
+            if (username === currentUser.username) {
+                showToast('Tidak dapat menghapus akun sendiri!', 'error');
+                return;
+            }
+            
+            if (confirm('Apakah Anda yakin ingin menghapus admin ini?')) {
+                try {
+                    const admin = adminData.find(a => a.username === username);
+                    
+                    // Delete from Google Sheets
+                    await postToGoogleSheets('deleteAdmin', { username: username });
+                    
+                    adminData = adminData.filter(a => a.username !== username);
+                    loadAdminGrid();
+                    
+                    logActivity('CRUD', `Admin menghapus admin: ${admin.name}`);
+                    showToast('Admin berhasil dihapus!', 'success');
+                } catch (error) {
+                    showToast('Gagal menghapus admin: ' + error.message, 'error');
+                }
             }
         }
 
@@ -1282,24 +1578,18 @@ function doGet(e) {
             `).join('');
         }
 
-        function refreshData() {
-            updateAdminStats();
-            loadPresensiTable();
-            loadTukangGrid();
-            showToast('Data berhasil direfresh!', 'success');
-        }
-
-        async function syncFromGoogleSheets() {
-            if (!GOOGLE_SHEETS_URL) {
-                showToast('Google Sheets belum dikonfigurasi!', 'error');
-                return;
+        async function refreshData() {
+            try {
+                showToast('Memuat ulang data...', 'info');
+                await loadDataFromSheets();
+                updateAdminStats();
+                loadPresensiTable();
+                loadTukangGrid();
+                loadAdminGrid();
+                showToast('Data berhasil direfresh!', 'success');
+            } catch (error) {
+                showToast('Gagal memuat ulang data: ' + error.message, 'error');
             }
-            
-            showToast('Sinkronisasi dengan Google Sheets...', 'info');
-            // Implementation for syncing from Google Sheets
-            setTimeout(() => {
-                showToast('Sinkronisasi berhasil!', 'success');
-            }, 2000);
         }
 
         // Tukang Functions
@@ -1370,25 +1660,20 @@ function doGet(e) {
                     tanggal: now.toLocaleDateString('id-ID')
                 };
                 
-                presensiData.push(presensiRecord);
-                saveLocalData();
+                // Save to Google Sheets
+                await postToGoogleSheets('addPresensi', presensiRecord);
                 
-                // Send to Google Sheets
-                if (GOOGLE_SHEETS_URL) {
-                    await sendToGoogleSheets({
-                        action: 'addPresensi',
-                        ...presensiRecord
-                    });
-                }
+                presensiData.push(presensiRecord);
                 
                 updateTukangStatus();
                 loadRiwayatPresensi();
                 updateTukangStats();
                 
+                logActivity('Presensi', `${currentUser.data.name} melakukan presensi masuk - Status: ${status}`);
                 showToast(`Presensi masuk berhasil! Status: ${status}`, 'success');
                 
             } catch (error) {
-                showToast('Gagal melakukan presensi masuk!', 'error');
+                showToast('Gagal melakukan presensi masuk: ' + error.message, 'error');
             } finally {
                 masukText.textContent = 'Presensi Masuk';
                 masukLoading.classList.add('hidden');
@@ -1416,27 +1701,25 @@ function doGet(e) {
                 
                 if (todayPresensi) {
                     todayPresensi.jamKeluar = jamKeluar;
-                    saveLocalData();
                     
-                    // Send to Google Sheets
-                    if (GOOGLE_SHEETS_URL) {
-                        await sendToGoogleSheets({
-                            action: 'addPresensi',
-                            ...todayPresensi
-                        });
-                    }
+                    // Update in Google Sheets
+                    await postToGoogleSheets('updatePresensi', {
+                        id: todayPresensi.id,
+                        jamKeluar: jamKeluar
+                    });
                     
                     updateTukangStatus();
                     loadRiwayatPresensi();
                     updateTukangStats();
                     
+                    logActivity('Presensi', `${currentUser.data.name} melakukan presensi keluar`);
                     showToast('Presensi keluar berhasil!', 'success');
                 } else {
                     showToast('Data presensi masuk tidak ditemukan!', 'error');
                 }
                 
             } catch (error) {
-                showToast('Gagal melakukan presensi keluar!', 'error');
+                showToast('Gagal melakukan presensi keluar: ' + error.message, 'error');
             } finally {
                 keluarText.textContent = 'Presensi Keluar';
                 keluarLoading.classList.add('hidden');
@@ -1662,12 +1945,30 @@ function doGet(e) {
             printWindow.print();
         }
 
+        async function syncToGoogleSheets() {
+            try {
+                showToast('Sinkronisasi ke Google Sheets...', 'info');
+                
+                // Sync all data to Google Sheets
+                await postToGoogleSheets('syncAll', {
+                    presensiData: presensiData,
+                    tukangData: tukangData,
+                    adminData: adminData
+                });
+                
+                showToast('Sinkronisasi berhasil!', 'success');
+            } catch (error) {
+                showToast('Gagal sinkronisasi: ' + error.message, 'error');
+            }
+        }
+
         function backupData() {
             try {
                 const backupData = {
                     presensiData,
                     tukangData,
                     adminData,
+                    activities,
                     timestamp: new Date().toISOString()
                 };
                 
@@ -1681,45 +1982,6 @@ function doGet(e) {
             } catch (error) {
                 showToast('Gagal membuat backup!', 'error');
             }
-        }
-
-        function restoreData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        try {
-                            const backupData = JSON.parse(e.target.result);
-                            
-                            if (backupData.presensiData) presensiData = backupData.presensiData;
-                            if (backupData.tukangData) tukangData = backupData.tukangData;
-                            if (backupData.adminData) adminData = backupData.adminData;
-                            
-                            saveLocalData();
-                            
-                            if (currentUser && currentUser.type === 'admin') {
-                                updateAdminStats();
-                                loadPresensiTable();
-                                loadTukangGrid();
-                            }
-                            
-                            showToast('Data berhasil direstore!', 'success');
-                        } catch (error) {
-                            showToast('File backup tidak valid!', 'error');
-                        }
-                    };
-                    reader.readAsText(file);
-                }
-            };
-            input.click();
-        }
-
-        function exportDemoData() {
-            exportToExcel();
         }
 
         // Utility Functions
@@ -1750,5 +2012,5 @@ function doGet(e) {
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9722891f56606d18',t:'MTc1NTY5OTY3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'972371b281f8e780',t:'MTc1NTcwOTE5OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
