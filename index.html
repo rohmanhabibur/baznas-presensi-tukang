@@ -1,139 +1,132 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Presensi Tukang - BAZNAS Banyuwangi</title>
-    <meta name="description" content="Sistem Presensi Digital untuk Tukang BAZNAS Banyuwangi">
-    <meta name="theme-color" content="#059669">
-    
-    <!-- External Libraries -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
-    <style>
-        /* Custom Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jsp df.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.33.8/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios-cache-adapter/1.4.0/axios-cache-adapter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios-cache-adapter/1.4.0/axios-cache-adapter.min.js"></script>
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(0); }
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    @keyframes slideOut {
+        to { transform: translateX(100%); opacity: 0; }
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease-out; }
+    .slide-in { animation: slideIn 0.3s ease-out; }
+    .pulse-animation { animation: pulse 2s infinite; }
+
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #059669, #047857);
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #047857, #065f46);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(5, 150, 105, 0.3);
+    }
+
+    .loading {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .toast {
+        animation: slideIn 0.3s ease-out;
+    }
+    .toast.hide {
+        animation: slideOut 0.3s ease-out forwards;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .status-hadir { background-color: #dcfce7; color: #166534; }
+    .status-izin { background-color: #fef3c7; color: #92400e; }
+    .status-sakit { background-color: #fee2e2; color: #991b1b; }
+    .status-alpha { background-color: #f3f4f6; color: #374151; }
+
+    .location-info {
+        background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+        border-left: 4px solid #0284c7;
+    }
+
+    .stats-card {
+        background: linear-gradient(135deg, #f8fafc, #ffffff);
+        border: 1px solid #e2e8f0;
+    }
+
+    .hidden { display: none !important; }
+    .block { display: block !important; }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+        .container-mobile {
+            padding: 1rem;
         }
-        
-        @keyframes slideIn {
-            from { transform: translateX(-100%); }
-            to { transform: translateX(0); }
+        .card-mobile {
+            margin: 0.5rem 0;
         }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .text-mobile {
+            font-size: 0.875rem;
         }
-        
-        .fade-in { animation: fadeIn 0.5s ease-out; }
-        .slide-in { animation: slideIn 0.3s ease-out; }
-        .pulse-animation { animation: pulse 2s infinite; }
-        
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-        
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #059669, #047857);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #047857, #065f46);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(5, 150, 105, 0.3);
-        }
-        
-        .loading {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ffffff;
-            border-top: 2px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .toast {
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        .toast.hide {
-            animation: slideOut 0.3s ease-out forwards;
-        }
-        
-        @keyframes slideOut {
-            to { transform: translateX(100%); opacity: 0; }
-        }
-        
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        
-        .status-hadir { background-color: #dcfce7; color: #166534; }
-        .status-izin { background-color: #fef3c7; color: #92400e; }
-        .status-sakit { background-color: #fee2e2; color: #991b1b; }
-        .status-alpha { background-color: #f3f4f6; color: #374151; }
-        
-        .location-info {
-            background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
-            border-left: 4px solid #0284c7;
-        }
-        
-        .stats-card {
-            background: linear-gradient(135deg, #f8fafc, #ffffff);
-            border: 1px solid #e2e8f0;
-        }
-        
-        .hidden { display: none !important; }
-        .block { display: block !important; }
-        
-        /* Responsive adjustments */
-        @media (max-width: 640px) {
-            .container-mobile {
-                padding: 1rem;
-            }
-            
-            .card-mobile {
-                margin: 0.5rem 0;
-            }
-            
-            .text-mobile {
-                font-size: 0.875rem;
-            }
-        }
-        
-        /* Print styles */
-        @media print {
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white !important; }
-        }
-    </style>
+    }
+
+    /* Print styles */
+    @media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        body { background: white !important; }
+    }
+</style>
 </head>
 <body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
-    <!-- Toast Container -->
     <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    <!-- Login Page -->
     <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md fade-in card-hover">
             <div class="text-center mb-8">
@@ -166,7 +159,6 @@
                 </button>
             </div>
             
-            <!-- Configuration Info -->
             <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
                 <h3 class="font-semibold text-blue-800 mb-2">⚙️ Konfigurasi Sistem</h3>
                 <div class="text-sm text-blue-700 space-y-1">
@@ -185,7 +177,6 @@
                 </div>
             </div>
             
-            <!-- Demo Accounts -->
             <div class="mt-4 p-3 bg-gray-50 rounded-lg">
                 <p class="text-xs text-gray-600 mb-2">Demo Accounts:</p>
                 <div class="text-xs text-gray-500 space-y-1">
@@ -196,7 +187,6 @@
         </div>
     </div>
 
-    <!-- Configuration Modal -->
     <div id="configModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">⚙️ Konfigurasi API</h3>
@@ -226,9 +216,7 @@
         </div>
     </div>
 
-    <!-- Main Dashboard -->
     <div id="dashboard" class="hidden">
-        <!-- Navigation -->
         <nav class="bg-white shadow-lg sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="flex justify-between items-center py-4">
@@ -254,7 +242,6 @@
             </div>
         </nav>
 
-        <!-- Tab Navigation -->
         <div class="bg-white border-b sticky top-16 z-30">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="flex space-x-8 overflow-x-auto">
@@ -274,11 +261,8 @@
             </div>
         </div>
 
-        <!-- Tab Contents -->
         <div class="max-w-7xl mx-auto px-4 py-6">
-            <!-- Presensi Tab -->
             <div id="presensiTab" class="tab-content">
-                <!-- Quick Stats -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="stats-card p-4 rounded-lg">
                         <div class="text-2xl font-bold text-green-600" id="todayPresent">0</div>
@@ -298,7 +282,6 @@
                     </div>
                 </div>
 
-                <!-- Presensi Form (Tukang Only) -->
                 <div id="presensiForm" class="bg-white rounded-lg shadow-lg p-6 mb-6 tukang-only">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">📋 Presensi Hari Ini</h2>
                     
@@ -323,7 +306,6 @@
                     </div>
                 </div>
 
-                <!-- Today's Attendance List -->
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-semibold text-gray-800">📅 Presensi Hari Ini</h2>
@@ -355,7 +337,6 @@
                 </div>
             </div>
 
-            <!-- Laporan Tab -->
             <div id="laporanTab" class="tab-content hidden">
                 <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">📊 Filter Laporan</h2>
@@ -390,7 +371,6 @@
                     </div>
                 </div>
 
-                <!-- Report Results -->
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">📈 Hasil Laporan</h2>
                     
@@ -437,7 +417,6 @@
                 </div>
             </div>
 
-            <!-- Data Tukang Tab (Admin Only) -->
             <div id="tukangTab" class="tab-content hidden">
                 <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
                     <div class="flex justify-between items-center mb-4">
@@ -447,7 +426,6 @@
                         </button>
                     </div>
                     
-                    <!-- Add Tukang Form -->
                     <div id="addTukangForm" class="hidden mb-6 p-4 bg-gray-50 rounded-lg">
                         <h3 class="font-semibold text-gray-800 mb-4">Tambah Tukang Baru</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -482,7 +460,6 @@
                         </div>
                     </div>
                     
-                    <!-- Tukang List -->
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
@@ -507,10 +484,8 @@
                 </div>
             </div>
 
-            <!-- Admin Tab -->
             <div id="adminTab" class="tab-content hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- System Info -->
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <h2 class="text-xl font-semibold text-gray-800 mb-4">ℹ️ Informasi Sistem</h2>
                         <div class="space-y-3 text-sm">
@@ -546,7 +521,6 @@
                         </div>
                     </div>
 
-                    <!-- Recent Activities -->
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <h2 class="text-xl font-semibold text-gray-800 mb-4">📋 Aktivitas Terbaru</h2>
                         <div id="recentActivities" class="space-y-3 max-h-64 overflow-y-auto">
@@ -557,7 +531,6 @@
                     </div>
                 </div>
 
-                <!-- Database Management -->
                 <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">🗄️ Manajemen Database</h2>
                     
@@ -592,8 +565,28 @@
         </div>
     </div>
 
-    <!-- JavaScript -->
     <script>
+    // ========== KONFIGURASI MODAL ==========
+    function showConfig() {
+        document.getElementById('configModal').classList.remove('hidden');
+        document.getElementById('apiUrlInput').value = CONFIG.API_URL || '';
+        document.getElementById('offlineMode').checked = CONFIG.OFFLINE_MODE;
+    }
+
+    function closeConfig() {
+        document.getElementById('configModal').classList.add('hidden');
+    }
+
+    function saveConfig() {
+        const apiUrl = document.getElementById('apiUrlInput').value.trim();
+        const offlineMode = document.getElementById('offlineMode').checked;
+
+        localStorage.setItem('apiUrl', apiUrl);
+        localStorage.setItem('offlineMode', offlineMode);
+
+        location.reload();
+    }
+
         // ==================== GLOBAL VARIABLES ====================
         let currentUser = null;
         let currentUserType = null;
@@ -842,7 +835,6 @@
                 if (currentUserType === 'tukang') {
                     checkTodayPresensi();
                 }
-                
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
                 showToast('Error loading data: ' + error.message, 'error');
@@ -899,18 +891,13 @@
                             longitude: position.coords.longitude,
                             accuracy: position.coords.accuracy
                         };
-                        
                         updateLocationInfo();
                     },
                     function(error) {
                         console.error('Geolocation error:', error);
                         updateLocationInfo('Error: ' + error.message);
                     },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 300000
-                    }
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
                 );
             } else {
                 updateLocationInfo('Geolocation tidak didukung browser');
@@ -919,12 +906,10 @@
 
         function updateLocationInfo(errorMessage = null) {
             const locationInfo = document.getElementById('locationInfo');
-            
             if (errorMessage) {
                 locationInfo.innerHTML = `<p class="text-red-600">⚠️ ${errorMessage}</p>`;
                 return;
             }
-            
             if (currentLocation) {
                 locationInfo.innerHTML = `
                     <p><strong>Koordinat:</strong> ${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}</p>
@@ -952,7 +937,7 @@
             const now = new Date();
             const timeString = now.toLocaleTimeString('id-ID');
             const dateString = now.toLocaleDateString('id-ID');
-            
+
             const presensiData = {
                 id: Date.now(),
                 tukangId: currentUser.id,
@@ -965,7 +950,7 @@
                 createdAt: now.toISOString(),
                 updatedAt: now.toISOString()
             };
-            
+
             try {
                 // Try to save online first
                 if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
@@ -984,7 +969,6 @@
                 todayPresensi = presensiData;
                 updatePresensiStatus();
                 refreshPresensi();
-                
             } catch (error) {
                 console.error('Clock in error:', error);
                 
@@ -993,7 +977,6 @@
                 todayPresensi = presensiData;
                 updatePresensiStatus();
                 refreshPresensi();
-                
                 showToast('Presensi masuk dicatat (akan disinkronkan nanti)', 'warning');
             }
         }
@@ -1011,7 +994,7 @@
             
             const now = new Date();
             const timeString = now.toLocaleTimeString('id-ID');
-            
+
             try {
                 // Try to update online first
                 if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
@@ -1019,7 +1002,6 @@
                         id: todayPresensi.id,
                         jamKeluar: timeString
                     });
-                    
                     if (result.success) {
                         showToast('Presensi keluar berhasil dicatat!', 'success');
                     } else {
@@ -1033,10 +1015,8 @@
                 
                 todayPresensi.jamKeluar = timeString;
                 todayPresensi.updatedAt = now.toISOString();
-                
                 updatePresensiStatus();
                 refreshPresensi();
-                
             } catch (error) {
                 console.error('Clock out error:', error);
                 
@@ -1044,22 +1024,16 @@
                 updatePresensiOffline(todayPresensi.id, { jamKeluar: timeString });
                 todayPresensi.jamKeluar = timeString;
                 todayPresensi.updatedAt = now.toISOString();
-                
                 updatePresensiStatus();
                 refreshPresensi();
-                
                 showToast('Presensi keluar dicatat (akan disinkronkan nanti)', 'warning');
             }
         }
 
         function checkTodayPresensi() {
             const today = new Date().toLocaleDateString('id-ID');
-            
             // Check in loaded data
-            todayPresensi = allPresensiData.find(p => 
-                p.tukangId === currentUser.id && p.date === today
-            );
-            
+            todayPresensi = allPresensiData.find(p => p.tukangId === currentUser.id && p.date === today);
             updatePresensiStatus();
         }
 
@@ -1106,11 +1080,9 @@
                 await loadPresensiData();
                 updateTodayAttendanceList();
                 updateStats();
-                
                 if (currentUserType === 'tukang') {
                     checkTodayPresensi();
                 }
-                
                 showToast('Data presensi berhasil diperbarui', 'success');
             } catch (error) {
                 console.error('Error refreshing presensi:', error);
@@ -1121,361 +1093,186 @@
         function updateTodayAttendanceList() {
             const tbody = document.getElementById('todayAttendanceList');
             const today = new Date().toLocaleDateString('id-ID');
-            
             const todayData = allPresensiData.filter(p => p.date === today);
+            
+            tbody.innerHTML = '';
             
             if (todayData.length === 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="5" class="text-center py-8 text-gray-500">
-                            Belum ada data presensi hari ini
+                            Tidak ada presensi hari ini
                         </td>
                     </tr>
                 `;
                 return;
             }
             
-            tbody.innerHTML = todayData.map(presensi => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="py-3 px-3 text-sm">${presensi.nama}</td>
-                    <td class="py-3 px-3 text-sm">${presensi.jamMasuk || '-'}</td>
-                    <td class="py-3 px-3 text-sm">${presensi.jamKeluar || '-'}</td>
-                    <td class="py-3 px-3">
-                        <span class="status-badge status-${presensi.status.toLowerCase()}">${presensi.status}</span>
-                    </td>
-                    <td class="py-3 px-3 text-sm">
-                        ${presensi.lokasi ? 
-                            `<button onclick="showLocation('${presensi.lokasi}')" class="text-blue-600 hover:text-blue-800">📍 Lihat</button>` : 
-                            '-'
-                        }
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // ==================== DATA MANAGEMENT ====================
-        async function loadPresensiData() {
-            try {
-                if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
-                    const result = await apiCall('GET_PRESENSI', {});
-                    if (result.success) {
-                        allPresensiData = result.data || [];
-                        saveToLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, allPresensiData);
-                        return;
-                    }
-                }
-                
-                // Load from localStorage
-                const offlineData = getFromLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, []);
-                allPresensiData = offlineData;
-                
-            } catch (error) {
-                console.error('Error loading presensi data:', error);
-                // Load from localStorage as fallback
-                const offlineData = getFromLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, []);
-                allPresensiData = offlineData;
-            }
-        }
-
-        async function loadTukangData() {
-            try {
-                if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
-                    const result = await apiCall('GET_TUKANG', {});
-                    if (result.success) {
-                        allTukangData = result.data || [];
-                        saveToLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, allTukangData);
-                        updateTukangTable();
-                        return;
-                    }
-                }
-                
-                // Load from localStorage
-                const offlineData = getFromLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, []);
-                allTukangData = offlineData;
-                updateTukangTable();
-                
-            } catch (error) {
-                console.error('Error loading tukang data:', error);
-                // Load from localStorage as fallback
-                const offlineData = getFromLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, []);
-                allTukangData = offlineData;
-                updateTukangTable();
-            }
-        }
-
-        function updateTukangTable() {
-            const tbody = document.getElementById('tukangTableBody');
+            todayData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
             
-            if (allTukangData.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-8 text-gray-500">
-                            Belum ada data tukang
-                        </td>
-                    </tr>
+            todayData.forEach(p => {
+                const row = document.createElement('tr');
+                row.classList.add('border-b');
+                
+                let statusClass = '';
+                if (p.status === 'Hadir') {
+                    statusClass = 'status-hadir';
+                } else if (p.status === 'Sakit') {
+                    statusClass = 'status-sakit';
+                } else if (p.status === 'Izin') {
+                    statusClass = 'status-izin';
+                } else {
+                    statusClass = 'status-alpha';
+                }
+                
+                row.innerHTML = `
+                    <td class="py-2 px-3 text-sm text-gray-700">${p.nama}</td>
+                    <td class="py-2 px-3 text-sm text-gray-700">${p.jamMasuk || '-'}</td>
+                    <td class="py-2 px-3 text-sm text-gray-700">${p.jamKeluar || '-'}</td>
+                    <td class="py-2 px-3 text-sm">
+                        <span class="status-badge ${statusClass}">${p.status}</span>
+                    </td>
+                    <td class="py-2 px-3 text-xs text-gray-500">${p.lokasi ? '📍 Tersedia' : 'Lokasi tidak tersedia'}</td>
                 `;
-                return;
-            }
-            
-            tbody.innerHTML = allTukangData.map(tukang => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="py-3 px-3 text-sm">${tukang.id}</td>
-                    <td class="py-3 px-3 text-sm font-medium">${tukang.name}</td>
-                    <td class="py-3 px-3 text-sm">${tukang.username}</td>
-                    <td class="py-3 px-3 text-sm">${tukang.phone || '-'}</td>
-                    <td class="py-3 px-3">
-                        <span class="status-badge ${tukang.status === 'Aktif' ? 'status-hadir' : 'status-alpha'}">
-                            ${tukang.status}
-                        </span>
-                    </td>
-                    <td class="py-3 px-3 text-sm">
-                        <button onclick="editTukang('${tukang.id}')" class="text-blue-600 hover:text-blue-800 mr-2">✏️</button>
-                        <button onclick="deleteTukang('${tukang.id}')" class="text-red-600 hover:text-red-800">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
+                tbody.appendChild(row);
+            });
         }
 
         function updateStats() {
             const today = new Date().toLocaleDateString('id-ID');
             const todayData = allPresensiData.filter(p => p.date === today);
             
-            // Today's stats
-            const todayPresent = todayData.filter(p => p.status === 'Hadir').length;
-            const todayLate = todayData.filter(p => p.jamMasuk && isLate(p.jamMasuk)).length;
-            const todayAbsent = allTukangData.length - todayPresent;
+            const presentCount = todayData.filter(p => p.status === 'Hadir' || p.status === 'Izin' || p.status === 'Sakit').length;
+            const totalTukang = allTukangData.length;
+            const absentCount = totalTukang - presentCount;
+            const lateCount = todayData.filter(p => p.status === 'Hadir' && p.jamMasuk && p.jamMasuk.split(':')[0] > '08').length;
             
-            document.getElementById('todayPresent').textContent = todayPresent;
-            document.getElementById('totalTukang').textContent = allTukangData.length;
-            document.getElementById('lateToday').textContent = todayLate;
-            document.getElementById('absentToday').textContent = todayAbsent;
+            document.getElementById('todayPresent').textContent = presentCount;
+            document.getElementById('totalTukang').textContent = totalTukang;
+            document.getElementById('lateToday').textContent = lateCount;
+            document.getElementById('absentToday').textContent = absentCount;
         }
 
-        function isLate(timeString) {
-            // Assume work starts at 08:00
-            const workStartTime = new Date();
-            workStartTime.setHours(8, 0, 0, 0);
-            
-            const [hours, minutes, seconds] = timeString.split(':');
-            const clockInTime = new Date();
-            clockInTime.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds || 0), 0);
-            
-            return clockInTime > workStartTime;
+        // ==================== LAPORAN FUNCTIONS ====================
+        function loadTukangFilter() {
+            const select = document.getElementById('tukangFilter');
+            select.innerHTML = '<option value="">Semua Tukang</option>';
+            allTukangData.forEach(tukang => {
+                const option = document.createElement('option');
+                option.value = tukang.id;
+                option.textContent = tukang.nama;
+                select.appendChild(option);
+            });
         }
 
-        function calculateDuration(startTime, endTime) {
-            const [startHours, startMinutes] = startTime.split(':').map(Number);
-            const [endHours, endMinutes] = endTime.split(':').map(Number);
+        async function generateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const tukangId = document.getElementById('tukangFilter').value;
             
-            const startDate = new Date();
-            startDate.setHours(startHours, startMinutes, 0, 0);
-            
-            const endDate = new Date();
-            endDate.setHours(endHours, endMinutes, 0, 0);
-            
-            const diffMs = endDate - startDate;
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-            
-            return `${diffHours} jam ${diffMinutes} menit`;
-        }
-
-        // ==================== OFFLINE DATA MANAGEMENT ====================
-        function savePresensiOffline(presensiData) {
-            const existingData = getFromLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, []);
-            existingData.push(presensiData);
-            saveToLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, existingData);
-            allPresensiData = existingData;
-        }
-
-        function updatePresensiOffline(id, updateData) {
-            const existingData = getFromLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, []);
-            const index = existingData.findIndex(p => p.id == id);
-            
-            if (index !== -1) {
-                existingData[index] = { ...existingData[index], ...updateData };
-                saveToLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, existingData);
-                allPresensiData = existingData;
+            if (!startDate || !endDate) {
+                showToast('Pilih tanggal awal dan akhir untuk laporan', 'warning');
+                return;
             }
-        }
 
-        function loadOfflineData() {
-            allPresensiData = getFromLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, []);
-            allTukangData = getFromLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, []);
+            const start = new Date(startDate);
+            const end = new Date(endDate);
             
-            // Add demo data if empty
-            if (allTukangData.length === 0) {
-                allTukangData = [
-                    {
-                        id: 'T001',
-                        name: 'Ahmad Tukang',
-                        username: 'tukang1',
-                        password: 'pass123',
-                        phone: '081234567890',
-                        address: 'Jl. Contoh No. 1',
-                        status: 'Aktif',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    },
-                    {
-                        id: 'T002',
-                        name: 'Budi Tukang',
-                        username: 'tukang2',
-                        password: 'pass123',
-                        phone: '081234567891',
-                        address: 'Jl. Contoh No. 2',
-                        status: 'Aktif',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    }
-                ];
-                saveToLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, allTukangData);
-            }
-        }
-
-        // ==================== API FUNCTIONS ====================
-        async function apiCall(action, data) {
-            if (!CONFIG.API_URL) {
-                throw new Error('API URL belum dikonfigurasi');
-            }
-            
-            const requestData = {
-                action: action,
-                ...data
-            };
-            
-            console.log('🌐 API Call:', action, requestData);
-            
-            try {
-                const response = await fetch(CONFIG.API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestData)
-                });
-                
-                // Note: no-cors mode doesn't allow reading response
-                // We'll assume success and handle errors through other means
-                return {
-                    success: true,
-                    message: 'Request sent successfully',
-                    data: null
-                };
-                
-            } catch (error) {
-                console.error('API Error:', error);
-                throw error;
-            }
-        }
-
-        async function testConnection() {
-            if (!CONFIG.API_URL) {
-                showToast('API URL belum dikonfigurasi', 'error');
+            if (start > end) {
+                showToast('Tanggal awal tidak boleh lebih dari tanggal akhir', 'error');
                 return;
             }
             
             try {
-                showToast('Testing koneksi...', 'info');
+                // Fetch all data for the date range
+                const allData = await loadPresensiData();
                 
-                const result = await apiCall('TEST_CONNECTION', {
-                    message: 'Test from web app',
-                    timestamp: new Date().toISOString()
+                const filteredData = allData.filter(p => {
+                    const recordDate = new Date(p.date.split('/').reverse().join('-')); // Format: dd/mm/yyyy to yyyy-mm-dd
+                    const matchDate = recordDate >= start && recordDate <= end;
+                    const matchTukang = !tukangId || p.tukangId === tukangId;
+                    return matchDate && matchTukang;
                 });
                 
-                if (result.success) {
-                    showToast('Koneksi berhasil!', 'success');
-                    updateApiStatus('Connected');
+                updateReportTable(filteredData);
+                updateReportSummary(filteredData);
+                showToast('Laporan berhasil dibuat', 'success');
+            } catch (error) {
+                console.error('Error generating report:', error);
+                showToast('Gagal membuat laporan: ' + error.message, 'error');
+            }
+        }
+
+        function updateReportSummary(data) {
+            document.getElementById('reportSummary').classList.remove('hidden');
+            
+            const hadircount = data.filter(p => p.status === 'Hadir').length;
+            const izinCount = data.filter(p => p.status === 'Izin').length;
+            const sakitCount = data.filter(p => p.status === 'Sakit').length;
+            const alphaCount = data.filter(p => p.status === 'Alpha').length;
+
+            document.getElementById('reportTotalHadir').textContent = hadircount;
+            document.getElementById('reportTotalIzin').textContent = izinCount;
+            document.getElementById('reportTotalSakit').textContent = sakitCount;
+            document.getElementById('reportTotalAlpha').textContent = alphaCount;
+        }
+
+        function updateReportTable(data) {
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-gray-500">
+                            Tidak ada data untuk filter yang dipilih
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            data.forEach(p => {
+                const row = document.createElement('tr');
+                row.classList.add('border-b');
+                
+                let duration = '-';
+                if (p.jamMasuk && p.jamKeluar) {
+                    duration = calculateDuration(p.jamMasuk, p.jamKeluar);
+                }
+                
+                let statusClass = '';
+                if (p.status === 'Hadir') {
+                    statusClass = 'status-hadir';
+                } else if (p.status === 'Izin') {
+                    statusClass = 'status-izin';
+                } else if (p.status === 'Sakit') {
+                    statusClass = 'status-sakit';
                 } else {
-                    showToast('Koneksi gagal: ' + result.message, 'error');
-                    updateApiStatus('Error');
+                    statusClass = 'status-alpha';
                 }
-                
-            } catch (error) {
-                console.error('Test connection error:', error);
-                showToast('Error testing koneksi: ' + error.message, 'error');
-                updateApiStatus('Error');
-            }
-        }
 
-        function updateApiStatus(status = null) {
-            const statusElements = ['apiStatus', 'adminApiStatus'];
-            const modeElements = ['currentMode', 'adminCurrentMode'];
-            
-            let statusText = status || (CONFIG.API_URL ? 'Configured' : 'Not Configured');
-            let statusColor = 'text-orange-600';
-            
-            switch(statusText) {
-                case 'Connected':
-                    statusColor = 'text-green-600';
-                    break;
-                case 'Error':
-                    statusColor = 'text-red-600';
-                    break;
-                case 'Configured':
-                    statusColor = 'text-blue-600';
-                    break;
-            }
-            
-            statusElements.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.textContent = statusText;
-                    element.className = statusColor;
-                }
-            });
-            
-            const mode = CONFIG.OFFLINE_MODE ? 'Offline' : 'Online';
-            modeElements.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.textContent = mode;
-                }
+                row.innerHTML = `
+                    <td class="py-2 px-3 text-sm text-gray-700 whitespace-nowrap">${p.date}</td>
+                    <td class="py-2 px-3 text-sm text-gray-700">${p.nama}</td>
+                    <td class="py-2 px-3 text-sm text-gray-700">${p.jamMasuk || '-'}</td>
+                    <td class="py-2 px-3 text-sm text-gray-700">${p.jamKeluar || '-'}</td>
+                    <td class="py-2 px-3 text-sm">
+                        <span class="status-badge ${statusClass}">${p.status}</span>
+                    </td>
+                    <td class="py-2 px-3 text-sm text-gray-700">${duration}</td>
+                `;
+                tbody.appendChild(row);
             });
         }
 
-        // ==================== CONFIGURATION ====================
-        function showConfig() {
-            document.getElementById('apiUrlInput').value = CONFIG.API_URL;
-            document.getElementById('offlineMode').checked = CONFIG.OFFLINE_MODE;
-            document.getElementById('configModal').classList.remove('hidden');
-        }
-
-        function closeConfig() {
-            document.getElementById('configModal').classList.add('hidden');
-        }
-
-        function saveConfig() {
-            const apiUrl = document.getElementById('apiUrlInput').value.trim();
-            const offlineMode = document.getElementById('offlineMode').checked;
-            
-            if (apiUrl && !apiUrl.includes('script.google.com')) {
-                showToast('URL harus dari Google Apps Script', 'error');
-                return;
-            }
-            
-            CONFIG.API_URL = apiUrl;
-            CONFIG.OFFLINE_MODE = offlineMode;
-            
-            localStorage.setItem('apiUrl', apiUrl);
-            localStorage.setItem('offlineMode', offlineMode.toString());
-            
-            updateApiStatus();
-            closeConfig();
-            
-            showToast('Konfigurasi berhasil disimpan', 'success');
-        }
-
-        // ==================== TUKANG MANAGEMENT ====================
+        // ==================== DATA TUKANG FUNCTIONS (ADMIN) ====================
         function showAddTukangForm() {
             document.getElementById('addTukangForm').classList.remove('hidden');
         }
 
         function hideAddTukangForm() {
             document.getElementById('addTukangForm').classList.add('hidden');
-            
-            // Clear form
             document.getElementById('newTukangName').value = '';
             document.getElementById('newTukangUsername').value = '';
             document.getElementById('newTukangPassword').value = '';
@@ -1489,31 +1286,25 @@
             const password = document.getElementById('newTukangPassword').value.trim();
             const phone = document.getElementById('newTukangPhone').value.trim();
             const address = document.getElementById('newTukangAddress').value.trim();
-            
+
             if (!name || !username || !password) {
                 showToast('Nama, username, dan password harus diisi', 'error');
                 return;
             }
             
-            // Check if username already exists
-            if (allTukangData.find(t => t.username === username)) {
-                showToast('Username sudah digunakan', 'error');
-                return;
-            }
-            
             const newTukang = {
                 id: 'T' + Date.now(),
-                name: name,
+                nama: name,
                 username: username,
                 password: password,
                 phone: phone,
                 address: address,
                 status: 'Aktif',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                createdAt: new Date().toISOString()
             };
             
             try {
+                // Try to save online
                 if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
                     const result = await apiCall('ADD_TUKANG', newTukang);
                     if (result.success) {
@@ -1523,517 +1314,426 @@
                     }
                 } else {
                     // Save offline
-                    allTukangData.push(newTukang);
-                    saveToLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, allTukangData);
+                    saveTukangOffline(newTukang);
                     showToast('Tukang berhasil ditambahkan (Offline)!', 'success');
                 }
                 
-                updateTukangTable();
+                await loadTukangData();
                 hideAddTukangForm();
-                
             } catch (error) {
                 console.error('Add tukang error:', error);
-                
-                // Fallback to offline save
-                allTukangData.push(newTukang);
-                saveToLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, allTukangData);
-                updateTukangTable();
-                hideAddTukangForm();
-                
-                showToast('Tukang ditambahkan (akan disinkronkan nanti)', 'warning');
+                showToast('Gagal menambah tukang: ' + error.message, 'error');
             }
         }
 
-        function editTukang(id) {
-            const tukang = allTukangData.find(t => t.id === id);
-            if (tukang) {
-                // For now, just show alert. Can be expanded to show edit form
-                alert(`Edit Tukang: ${tukang.name}\n(Fitur edit akan ditambahkan)`);
-            }
-        }
-
-        function deleteTukang(id) {
-            const tukang = allTukangData.find(t => t.id === id);
-            if (tukang && confirm(`Yakin ingin menghapus tukang ${tukang.name}?`)) {
-                allTukangData = allTukangData.filter(t => t.id !== id);
-                saveToLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, allTukangData);
-                updateTukangTable();
-                showToast('Tukang berhasil dihapus', 'success');
-            }
-        }
-
-        // ==================== REPORTING ====================
-        function loadTukangFilter() {
-            const select = document.getElementById('tukangFilter');
-            select.innerHTML = '<option value="">Semua Tukang</option>';
-            
-            allTukangData.forEach(tukang => {
-                const option = document.createElement('option');
-                option.value = tukang.id;
-                option.textContent = tukang.name;
-                select.appendChild(option);
-            });
-        }
-
-        function generateReport() {
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            const tukangId = document.getElementById('tukangFilter').value;
-            
-            if (!startDate || !endDate) {
-                showToast('Pilih rentang tanggal terlebih dahulu', 'error');
-                return;
-            }
-            
-            // Filter data
-            let filteredData = allPresensiData.filter(p => {
-                const presensiDate = new Date(p.date.split('/').reverse().join('-'));
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                
-                return presensiDate >= start && presensiDate <= end;
-            });
-            
-            if (tukangId) {
-                filteredData = filteredData.filter(p => p.tukangId === tukangId);
-            }
-            
-            // Update summary
-            const totalHadir = filteredData.filter(p => p.status === 'Hadir').length;
-            const totalIzin = filteredData.filter(p => p.status === 'Izin').length;
-            const totalSakit = filteredData.filter(p => p.status === 'Sakit').length;
-            const totalAlpha = filteredData.filter(p => p.status === 'Alpha').length;
-            
-            document.getElementById('reportTotalHadir').textContent = totalHadir;
-            document.getElementById('reportTotalIzin').textContent = totalIzin;
-            document.getElementById('reportTotalSakit').textContent = totalSakit;
-            document.getElementById('reportTotalAlpha').textContent = totalAlpha;
-            
-            document.getElementById('reportSummary').classList.remove('hidden');
-            
-            // Update table
-            const tbody = document.getElementById('reportTableBody');
-            
-            if (filteredData.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-8 text-gray-500">
-                            Tidak ada data untuk periode yang dipilih
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tbody.innerHTML = filteredData.map(presensi => {
-                const duration = presensi.jamMasuk && presensi.jamKeluar ? 
-                    calculateDuration(presensi.jamMasuk, presensi.jamKeluar) : '-';
-                
-                return `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="py-3 px-3 text-sm">${presensi.date}</td>
-                        <td class="py-3 px-3 text-sm font-medium">${presensi.nama}</td>
-                        <td class="py-3 px-3 text-sm">${presensi.jamMasuk || '-'}</td>
-                        <td class="py-3 px-3 text-sm">${presensi.jamKeluar || '-'}</td>
-                        <td class="py-3 px-3">
-                            <span class="status-badge status-${presensi.status.toLowerCase()}">${presensi.status}</span>
-                        </td>
-                        <td class="py-3 px-3 text-sm">${duration}</td>
-                    </tr>
-                `;
-            }).join('');
-            
-            showToast('Laporan berhasil di-generate', 'success');
-        }
-
-        function exportExcel() {
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            
-            if (!startDate || !endDate) {
-                showToast('Generate laporan terlebih dahulu', 'error');
-                return;
-            }
-            
-            // Get filtered data (same as generateReport)
-            let filteredData = allPresensiData.filter(p => {
-                const presensiDate = new Date(p.date.split('/').reverse().join('-'));
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                
-                return presensiDate >= start && presensiDate <= end;
-            });
-            
-            const tukangId = document.getElementById('tukangFilter').value;
-            if (tukangId) {
-                filteredData = filteredData.filter(p => p.tukangId === tukangId);
-            }
-            
-            if (filteredData.length === 0) {
-                showToast('Tidak ada data untuk diekspor', 'warning');
-                return;
-            }
-            
-            // Prepare data for Excel
-            const excelData = filteredData.map(p => ({
-                'Tanggal': p.date,
-                'Nama': p.nama,
-                'Jam Masuk': p.jamMasuk || '-',
-                'Jam Keluar': p.jamKeluar || '-',
-                'Status': p.status,
-                'Durasi': p.jamMasuk && p.jamKeluar ? calculateDuration(p.jamMasuk, p.jamKeluar) : '-',
-                'Lokasi': p.lokasi || '-'
-            }));
-            
-            // Create workbook
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(excelData);
-            
-            // Add worksheet to workbook
-            XLSX.utils.book_append_sheet(wb, ws, 'Laporan Presensi');
-            
-            // Save file
-            const filename = `Laporan_Presensi_${startDate}_${endDate}.xlsx`;
-            XLSX.writeFile(wb, filename);
-            
-            showToast('File Excel berhasil diunduh', 'success');
-        }
-
-        function exportPDF() {
-            showToast('Fitur export PDF akan segera tersedia', 'info');
-        }
-
-        // ==================== ADMIN FUNCTIONS ====================
-        async function loadAdminData() {
-            updateApiStatus();
-            
-            // Update database counts
-            document.getElementById('dbPresensiCount').textContent = allPresensiData.length;
-            document.getElementById('dbTukangCount').textContent = allTukangData.length;
-            
-            // Update last sync time
-            const lastSync = localStorage.getItem(CONFIG.STORAGE_KEYS.LAST_SYNC);
-            if (lastSync) {
-                document.getElementById('lastSyncTime').textContent = new Date(lastSync).toLocaleString('id-ID');
-            }
-            
-            // Load activities
-            await loadActivities();
-        }
-
-        async function loadActivities() {
-            try {
-                let activities = [];
-                
-                if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
-                    const result = await apiCall('GET_ACTIVITIES', {});
-                    if (result.success) {
-                        activities = result.data || [];
-                        saveToLocalStorage(CONFIG.STORAGE_KEYS.ACTIVITIES, activities);
-                    }
-                } else {
-                    activities = getFromLocalStorage(CONFIG.STORAGE_KEYS.ACTIVITIES, []);
-                }
-                
-                updateActivitiesList(activities);
-                document.getElementById('dbActivityCount').textContent = activities.length;
-                
-            } catch (error) {
-                console.error('Error loading activities:', error);
-                const activities = getFromLocalStorage(CONFIG.STORAGE_KEYS.ACTIVITIES, []);
-                updateActivitiesList(activities);
-                document.getElementById('dbActivityCount').textContent = activities.length;
-            }
-        }
-
-        function updateActivitiesList(activities) {
-            const container = document.getElementById('recentActivities');
-            
-            if (activities.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-500 py-4">Belum ada aktivitas</div>';
-                return;
-            }
-            
-            container.innerHTML = activities.slice(0, 10).map(activity => `
-                <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span class="text-blue-600 text-xs">👤</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900">${activity.user}</p>
-                        <p class="text-sm text-gray-600">${activity.description}</p>
-                        <p class="text-xs text-gray-500">${activity.timestamp}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function syncData() {
-            const syncBtn = document.getElementById('syncBtn');
-            const syncIcon = document.getElementById('syncIcon');
-            
-            syncIcon.textContent = '⏳';
-            syncBtn.disabled = true;
-            
+        async function loadTukangData() {
             try {
                 if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
-                    const result = await apiCall('SYNC_DATA', {});
+                    const result = await apiCall('GET_TUKANG');
                     if (result.success) {
-                        // Update local data with synced data
-                        if (result.data.presensi) {
-                            allPresensiData = result.data.presensi;
-                            saveToLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, allPresensiData);
-                        }
-                        
-                        if (result.data.tukang) {
-                            allTukangData = result.data.tukang;
-                            saveToLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, allTukangData);
-                        }
-                        
-                        localStorage.setItem(CONFIG.STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
-                        
-                        showToast('Sinkronisasi berhasil!', 'success');
-                        
-                        // Refresh current view
-                        updateStats();
-                        updateTodayAttendanceList();
-                        if (currentUserType === 'tukang') {
-                            checkTodayPresensi();
-                        }
+                        allTukangData = result.data.tukang;
+                        saveTukangOffline(allTukangData, true); // Overwrite local data
                     } else {
                         throw new Error(result.message);
                     }
                 } else {
-                    showToast('Mode offline - tidak ada yang disinkronkan', 'info');
+                    allTukangData = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.TUKANG)) || [];
+                    console.log('Loaded tukang data offline:', allTukangData.length, 'records');
                 }
-                
+                updateTukangTable();
             } catch (error) {
-                console.error('Sync error:', error);
-                showToast('Error sinkronisasi: ' + error.message, 'error');
-            } finally {
-                syncIcon.textContent = '🔄';
-                syncBtn.disabled = false;
-            }
-        }
-
-        async function fullSync() {
-            if (confirm('Yakin ingin melakukan full sync? Ini akan mengganti semua data lokal.')) {
-                await syncData();
-                showToast('Full sync selesai', 'success');
-            }
-        }
-
-        function clearLocalData() {
-            if (confirm('Yakin ingin menghapus semua data lokal? Data yang belum disinkronkan akan hilang.')) {
-                Object.values(CONFIG.STORAGE_KEYS).forEach(key => {
-                    localStorage.removeItem(key);
-                });
-                
-                allPresensiData = [];
-                allTukangData = [];
-                todayPresensi = null;
-                
-                showToast('Data lokal berhasil dihapus', 'success');
-                
-                // Reload data
-                loadOfflineData();
-                updateStats();
-                updateTodayAttendanceList();
+                console.error('Load tukang data error:', error);
+                showToast('Gagal memuat data tukang. Menggunakan data offline...', 'warning');
+                allTukangData = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.TUKANG)) || [];
                 updateTukangTable();
             }
         }
 
-        function backupData() {
-            const backupData = {
-                presensi: allPresensiData,
-                tukang: allTukangData,
-                activities: getFromLocalStorage(CONFIG.STORAGE_KEYS.ACTIVITIES, []),
-                timestamp: new Date().toISOString(),
-                version: CONFIG.VERSION
-            };
+        function updateTukangTable() {
+            const tbody = document.getElementById('tukangTableBody');
+            tbody.innerHTML = '';
             
-            const dataStr = JSON.stringify(backupData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            if (allTukangData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-gray-500">
+                            Tidak ada data tukang
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
             
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = `backup_presensi_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            
-            showToast('Backup berhasil diunduh', 'success');
+            allTukangData.forEach(tukang => {
+                const row = document.createElement('tr');
+                row.classList.add('border-b');
+                row.innerHTML = `
+                    <td class="py-2 px-3 text-sm text-gray-700">${tukang.id}</td>
+                    <td class="py-2 px-3 text-sm text-gray-700">${tukang.nama}</td>
+                    <td class="py-2 px-3 text-sm text-gray-700">${tukang.username}</td>
+                    <td class="py-2 px-3 text-sm text-gray-700">${tukang.phone || '-'}</td>
+                    <td class="py-2 px-3 text-sm">
+                        <span class="status-badge ${tukang.status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${tukang.status}
+                        </span>
+                    </td>
+                    <td class="py-2 px-3 text-sm">
+                        <button onclick="editTukang('${tukang.id}')" class="text-blue-500 hover:text-blue-700 mr-2">
+                            ✏️
+                        </button>
+                        <button onclick="deleteTukang('${tukang.id}')" class="text-red-500 hover:text-red-700">
+                            🗑️
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        async function editTukang(id) {
+            // Placeholder for future edit functionality
+            showToast('Fungsi edit belum tersedia', 'info');
         }
 
-        function importData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        try {
-                            const backupData = JSON.parse(e.target.result);
-                            
-                            if (confirm('Yakin ingin mengimpor data? Data saat ini akan diganti.')) {
-                                if (backupData.presensi) {
-                                    allPresensiData = backupData.presensi;
-                                    saveToLocalStorage(CONFIG.STORAGE_KEYS.PRESENSI, allPresensiData);
-                                }
-                                
-                                if (backupData.tukang) {
-                                    allTukangData = backupData.tukang;
-                                    saveToLocalStorage(CONFIG.STORAGE_KEYS.TUKANG, allTukangData);
-                                }
-                                
-                                if (backupData.activities) {
-                                    saveToLocalStorage(CONFIG.STORAGE_KEYS.ACTIVITIES, backupData.activities);
-                                }
-                                
-                                showToast('Data berhasil diimpor', 'success');
-                                
-                                // Refresh views
-                                updateStats();
-                                updateTodayAttendanceList();
-                                updateTukangTable();
-                            }
-                        } catch (error) {
-                            showToast('Error mengimpor data: ' + error.message, 'error');
+        async function deleteTukang(id) {
+            if (confirm('Yakin ingin menghapus data tukang ini?')) {
+                try {
+                    if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
+                        const result = await apiCall('DELETE_TUKANG', { id: id });
+                        if (result.success) {
+                            showToast('Tukang berhasil dihapus!', 'success');
+                        } else {
+                            throw new Error(result.message);
                         }
-                    };
-                    reader.readAsText(file);
+                    } else {
+                        deleteTukangOffline(id);
+                        showToast('Tukang berhasil dihapus (Offline)!', 'success');
+                    }
+                    await loadTukangData();
+                } catch (error) {
+                    console.error('Delete tukang error:', error);
+                    showToast('Gagal menghapus tukang: ' + error.message, 'error');
                 }
-            };
-            
-            input.click();
-        }
-
-        function showSystemLogs() {
-            alert('System Logs:\n\n' + 
-                  '• Version: ' + CONFIG.VERSION + '\n' +
-                  '• API URL: ' + (CONFIG.API_URL || 'Not configured') + '\n' +
-                  '• Mode: ' + (CONFIG.OFFLINE_MODE ? 'Offline' : 'Online') + '\n' +
-                  '• Presensi Records: ' + allPresensiData.length + '\n' +
-                  '• Tukang Records: ' + allTukangData.length + '\n' +
-                  '• Last Sync: ' + (localStorage.getItem(CONFIG.STORAGE_KEYS.LAST_SYNC) || 'Never')
-            );
-        }
-
-        // ==================== UTILITY FUNCTIONS ====================
-        function showLocation(coordinates) {
-            if (coordinates) {
-                const [lat, lng] = coordinates.split(',');
-                const url = `https://www.google.com/maps?q=${lat},${lng}`;
-                window.open(url, '_blank');
             }
         }
 
-        function setLoading(type, isLoading) {
-            const btn = document.getElementById(type + 'Btn');
-            const text = document.getElementById(type + 'Text');
-            const loading = document.getElementById(type + 'Loading');
+        // ==================== ADMIN FUNCTIONS ====================
+        async function loadAdminData() {
+            try {
+                if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
+                    const presensiCount = (await apiCall('GET_PRESENSI_COUNT')).data.count;
+                    const tukangCount = (await apiCall('GET_TUKANG_COUNT')).data.count;
+                    const activityCount = (await apiCall('GET_ACTIVITY_COUNT')).data.count;
+                    const recentActivities = (await apiCall('GET_RECENT_ACTIVITIES')).data.activities;
+                    
+                    document.getElementById('dbPresensiCount').textContent = presensiCount;
+                    document.getElementById('dbTukangCount').textContent = tukangCount;
+                    document.getElementById('dbActivityCount').textContent = activityCount;
+                    updateRecentActivities(recentActivities);
+                }
+                updateApiStatus(true);
+            } catch (error) {
+                console.error('Load admin data error:', error);
+                showToast('Gagal memuat data admin dari server.', 'error');
+                updateApiStatus(false);
+            }
+        }
+
+        function updateRecentActivities(activities) {
+            const container = document.getElementById('recentActivities');
+            container.innerHTML = '';
+            
+            if (activities.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-4">Tidak ada aktivitas terbaru</div>`;
+                return;
+            }
+            
+            activities.forEach(activity => {
+                const item = document.createElement('div');
+                item.classList.add('p-3', 'bg-gray-50', 'rounded-lg', 'border', 'border-gray-200');
+                item.innerHTML = `
+                    <p class="text-sm font-medium text-gray-800">${activity.message}</p>
+                    <p class="text-xs text-gray-500 mt-1">${new Date(activity.timestamp).toLocaleString('id-ID')}</p>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function fullSync() {
+            showToast('Memulai sinkronisasi penuh...', 'info');
+            setLoading('sync', true);
+            try {
+                if (!CONFIG.API_URL || CONFIG.OFFLINE_MODE) {
+                    throw new Error('Sync hanya bisa dilakukan dalam mode online');
+                }
+                
+                const localPresensi = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.PRESENSI)) || [];
+                const localTukang = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.TUKANG)) || [];
+                
+                // Send local data to server
+                await apiCall('SYNC_DATA', {
+                    presensi: localPresensi,
+                    tukang: localTukang
+                });
+                
+                // Fetch fresh data from server
+                await loadPresensiData();
+                await loadTukangData();
+                await loadActivities();
+                
+                localStorage.setItem(CONFIG.STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+                showToast('Sinkronisasi berhasil!', 'success');
+            } catch (error) {
+                console.error('Full sync error:', error);
+                showToast('Sinkronisasi gagal: ' + error.message, 'error');
+            } finally {
+                setLoading('sync', false);
+                updateAdminData();
+            }
+        }
+
+        function clearLocalData() {
+            if (confirm('Yakin ingin menghapus semua data lokal? Data yang belum disinkronkan akan hilang!')) {
+                localStorage.removeItem(CONFIG.STORAGE_KEYS.PRESENSI);
+                localStorage.removeItem(CONFIG.STORAGE_KEYS.TUKANG);
+                localStorage.removeItem(CONFIG.STORAGE_KEYS.ACTIVITIES);
+                localStorage.removeItem(CONFIG.STORAGE_KEYS.LAST_SYNC);
+                showToast('Semua data lokal berhasil dihapus!', 'success');
+                allPresensiData = [];
+                allTukangData = [];
+                updateTodayAttendanceList();
+                updateTukangTable();
+                updateAdminData();
+            }
+        }
+
+        function backupData() {
+            const data = {
+                presensi: JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.PRESENSI)),
+                tukang: JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.TUKANG))
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `presensi_backup_${new Date().toISOString()}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            showToast('Data berhasil di-backup!', 'success');
+        }
+
+        function importData() {
+            // Placeholder for future import functionality
+            showToast('Fungsi import belum tersedia', 'info');
+        }
+
+        function showSystemLogs() {
+            // Placeholder for future log viewer
+            showToast('Fungsi log sistem belum tersedia', 'info');
+        }
+        
+        // ==================== UTILITY FUNCTIONS ====================
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.classList.add('toast', 'p-4', 'rounded-lg', 'shadow-lg', 'text-white', 'font-medium', 'flex', 'items-center', 'space-x-2');
+            
+            switch(type) {
+                case 'success':
+                    toast.classList.add('bg-green-500');
+                    toast.innerHTML = '<span>✅</span> ' + message;
+                    break;
+                case 'error':
+                    toast.classList.add('bg-red-500');
+                    toast.innerHTML = '<span>❌</span> ' + message;
+                    break;
+                case 'warning':
+                    toast.classList.add('bg-yellow-500');
+                    toast.innerHTML = '<span>⚠️</span> ' + message;
+                    break;
+                default:
+                    toast.classList.add('bg-blue-500');
+                    toast.innerHTML = '<span>ℹ️</span> ' + message;
+                    break;
+            }
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function setLoading(elementId, isLoading) {
+            const btn = document.getElementById(elementId + 'Btn');
+            const text = document.getElementById(elementId + 'Text');
+            const loading = document.getElementById(elementId + 'Loading');
             
             if (btn && text && loading) {
+                btn.disabled = isLoading;
                 if (isLoading) {
-                    btn.disabled = true;
-                    btn.classList.add('opacity-50');
+                    text.classList.add('hidden');
                     loading.classList.remove('hidden');
                 } else {
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50');
+                    text.classList.remove('hidden');
                     loading.classList.add('hidden');
                 }
             }
         }
 
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            
-            let bgColor = 'bg-blue-500';
-            let icon = 'ℹ️';
-            
-            switch(type) {
-                case 'success':
-                    bgColor = 'bg-green-500';
-                    icon = '✅';
-                    break;
-                case 'error':
-                    bgColor = 'bg-red-500';
-                    icon = '❌';
-                    break;
-                case 'warning':
-                    bgColor = 'bg-yellow-500';
-                    icon = '⚠️';
-                    break;
+        async function apiCall(action, data = {}) {
+            if (!CONFIG.API_URL) {
+                throw new Error('URL API belum dikonfigurasi. Silakan atur di Pengaturan.');
             }
             
-            toast.className = `toast ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2`;
-            toast.innerHTML = `
-                <span>${icon}</span>
-                <span>${message}</span>
-                <button onclick="this.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">×</button>
-            `;
+            const url = `${CONFIG.API_URL}?action=${action}`;
             
-            container.appendChild(toast);
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            };
             
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.classList.add('hide');
-                    setTimeout(() => {
-                        if (toast.parentElement) {
-                            toast.remove();
-                        }
-                    }, 300);
-                }
-            }, 5000);
-        }
-
-        function saveToLocalStorage(key, data) {
             try {
-                localStorage.setItem(key, JSON.stringify(data));
-            } catch (error) {
-                console.error('Error saving to localStorage:', error);
-            }
-        }
-
-        function getFromLocalStorage(key, defaultValue = null) {
-            try {
-                const data = localStorage.getItem(key);
-                return data ? JSON.parse(data) : defaultValue;
-            } catch (error) {
-                console.error('Error reading from localStorage:', error);
-                return defaultValue;
-            }
-        }
-
-        // ==================== KEYBOARD SHORTCUTS ====================
-        document.addEventListener('keydown', function(e) {
-            // Enter key on login form
-            if (e.key === 'Enter' && !document.getElementById('loginPage').classList.contains('hidden')) {
-                login();
-            }
-            
-            // Ctrl+S for sync (prevent default save)
-            if (e.ctrlKey && e.key === 's') {
-                e.preventDefault();
-                if (!document.getElementById('dashboard').classList.contains('hidden')) {
-                    syncData();
+                const response = await fetch(url, options);
+                const result = await response.json();
+                if (result.success === false) {
+                    throw new Error(result.message || 'Error from API');
                 }
+                return result;
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw new Error('Koneksi ke server gagal. Cek URL API atau jaringan Anda.');
             }
-        });
-
-        // ==================== SERVICE WORKER (Optional) ====================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                // Service worker registration can be added here for offline functionality
-                console.log('Service Worker support detected');
-            });
         }
 
-        console.log('🚀 Sistem Presensi Tukang v2.3 - Ready!');
+        function savePresensiOffline(data, overwrite = false) {
+            let existingData = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.PRESENSI)) || [];
+            if (overwrite) {
+                existingData = data;
+            } else {
+                existingData.push(data);
+            }
+            localStorage.setItem(CONFIG.STORAGE_KEYS.PRESENSI, JSON.stringify(existingData));
+        }
+
+        function updatePresensiOffline(id, newData) {
+            let existingData = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.PRESENSI)) || [];
+            const index = existingData.findIndex(p => p.id === id);
+            if (index !== -1) {
+                existingData[index] = { ...existingData[index], ...newData };
+                localStorage.setItem(CONFIG.STORAGE_KEYS.PRESENSI, JSON.stringify(existingData));
+            }
+        }
+
+        async function loadPresensiData() {
+            try {
+                if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
+                    const result = await apiCall('GET_PRESENSI');
+                    if (result.success) {
+                        allPresensiData = result.data.presensi;
+                        savePresensiOffline(allPresensiData, true); // Overwrite local data
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } else {
+                    allPresensiData = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.PRESENSI)) || [];
+                    console.log('Loaded presensi data offline:', allPresensiData.length, 'records');
+                }
+            } catch (error) {
+                console.error('Load presensi data error:', error);
+                showToast('Gagal memuat data presensi. Menggunakan data offline...', 'warning');
+                allPresensiData = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.PRESENSI)) || [];
+            }
+        }
+        
+        function saveTukangOffline(data, overwrite = false) {
+            let existingData = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.TUKANG)) || [];
+            if (overwrite) {
+                existingData = data;
+            } else {
+                existingData.push(data);
+            }
+            localStorage.setItem(CONFIG.STORAGE_KEYS.TUKANG, JSON.stringify(existingData));
+        }
+
+        function deleteTukangOffline(id) {
+            let existingData = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.TUKANG)) || [];
+            const updatedData = existingData.filter(tukang => tukang.id !== id);
+            localStorage.setItem(CONFIG.STORAGE_KEYS.TUKANG, JSON.stringify(updatedData));
+        }
+        
+        async function loadActivities() {
+            // Placeholder for future activity log loading
+        }
+        
+        function updateApiStatus(isOnline = false) {
+            const statusElement = document.getElementById('apiStatus');
+            const adminStatusElement = document.getElementById('adminApiStatus');
+            const modeElement = document.getElementById('currentMode');
+            const adminModeElement = document.getElementById('adminCurrentMode');
+            
+            if (CONFIG.OFFLINE_MODE) {
+                statusElement.textContent = 'Offline (Lokal)';
+                statusElement.classList.remove('text-green-600', 'text-orange-600');
+                statusElement.classList.add('text-red-600');
+                if (adminStatusElement) {
+                     adminStatusElement.textContent = 'Offline (Lokal)';
+                     adminStatusElement.classList.remove('text-green-600', 'text-orange-600');
+                     adminStatusElement.classList.add('text-red-600');
+                }
+                modeElement.textContent = 'Offline';
+                adminModeElement.textContent = 'Offline';
+            } else {
+                if (isOnline) {
+                    statusElement.textContent = 'Online';
+                    statusElement.classList.remove('text-orange-600', 'text-red-600');
+                    statusElement.classList.add('text-green-600');
+                    if (adminStatusElement) {
+                        adminStatusElement.textContent = 'Online';
+                        adminStatusElement.classList.remove('text-orange-600', 'text-red-600');
+                        adminStatusElement.classList.add('text-green-600');
+                    }
+                } else {
+                    statusElement.textContent = 'Terputus';
+                    statusElement.classList.remove('text-green-600', 'text-red-600');
+                    statusElement.classList.add('text-orange-600');
+                    if (adminStatusElement) {
+                        adminStatusElement.textContent = 'Terputus';
+                        adminStatusElement.classList.remove('text-green-600', 'text-red-600');
+                        adminStatusElement.classList.add('text-orange-600');
+                    }
+                }
+                modeElement.textContent = 'Online';
+                adminModeElement.textContent = 'Online';
+            }
+        }
+        
+        function updateAdminData() {
+            // This function is for updating admin data without a full reload
+            if (currentUserType === 'admin') {
+                loadAdminData();
+            }
+        }
+        
+        function calculateDuration(startTime, endTime) {
+            const [startHour, startMinute] = startTime.split(':').map(Number);
+            const [endHour, endMinute] = endTime.split(':').map(Number);
+            
+            const startDate = new Date();
+            startDate.setHours(startHour, startMinute, 0);
+            
+            const endDate = new Date();
+            endDate.setHours(endHour, endMinute, 0);
+            
+            const diff = endDate - startDate;
+            
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            
+            return `${hours}j ${minutes}m`;
+        }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9727eeef3703ddfc',t:'MTc1NTc1NjI3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
