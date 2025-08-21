@@ -1,4 +1,5 @@
-# .htaccess untuk Sistem Presensi Tukang BAZNAS Banyuwangi
+# .htaccess untuk Sistem Presensi BAZNAS Banyuwangi
+# Struktur file terpisah untuk kemudahan maintenance
 
 # Enable URL Rewriting
 RewriteEngine On
@@ -7,66 +8,103 @@ RewriteEngine On
 AddDefaultCharset UTF-8
 
 # Security Headers
-Header always set X-Content-Type-Options nosniff
-Header always set X-Frame-Options DENY
-Header always set X-XSS-Protection "1; mode=block"
-Header always set Referrer-Policy "strict-origin-when-cross-origin"
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options SAMEORIGIN
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https:; font-src 'self' https:;"
+</IfModule>
 
-# HTTPS Redirect (uncomment jika menggunakan SSL)
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# Default Document - prioritas ke index.html
+DirectoryIndex index.html index.php
 
-# Default Document
-DirectoryIndex index.php index.html
-
-# Redirect semua request ke index.php jika file tidak ditemukan
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
-
-# Protect sensitive files
-<Files "config.php">
-    Order Allow,Deny
-    Deny from all
-</Files>
-
-<Files "database.php">
-    Order Allow,Deny
-    Deny from all
-</Files>
-
+# Protect sensitive files dan folders
 <Files ".env">
     Order Allow,Deny
     Deny from all
 </Files>
 
-# Block access to .htaccess itself
+<Files "config.js">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
 <Files ".htaccess">
     Order Allow,Deny
     Deny from all
 </Files>
 
-# Prevent access to PHP files in assets folder
-<FilesMatch "\.php$">
-    <If "%{REQUEST_URI} =~ m#^/assets/#">
-        Order Allow,Deny
-        Deny from all
-    </If>
-</FilesMatch>
+# Protect data folder
+<Directory "assets/data">
+    Order Allow,Deny
+    Deny from all
+</Directory>
 
-# Cache static files
+# Allow access to assets folder
+<Directory "assets">
+    <Files "*.css">
+        Order Allow,Deny
+        Allow from all
+    </Files>
+    <Files "*.js">
+        Order Allow,Deny
+        Allow from all
+    </Files>
+    <Files "*.png">
+        Order Allow,Deny
+        Allow from all
+    </Files>
+    <Files "*.jpg">
+        Order Allow,Deny
+        Allow from all
+    </Files>
+    <Files "*.jpeg">
+        Order Allow,Deny
+        Allow from all
+    </Files>
+    <Files "*.gif">
+        Order Allow,Deny
+        Allow from all
+    </Files>
+    <Files "*.svg">
+        Order Allow,Deny
+        Allow from all
+    </Files>
+    <Files "*.ico">
+        Order Allow,Deny
+        Allow from all
+    </Files>
+</Directory>
+
+# Cache static assets untuk performance
 <IfModule mod_expires.c>
     ExpiresActive On
+    
+    # CSS dan JS
     ExpiresByType text/css "access plus 1 month"
     ExpiresByType application/javascript "access plus 1 month"
-    ExpiresByType image/png "access plus 1 month"
-    ExpiresByType image/jpg "access plus 1 month"
-    ExpiresByType image/jpeg "access plus 1 month"
-    ExpiresByType image/gif "access plus 1 month"
-    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    
+    # Images
+    ExpiresByType image/png "access plus 3 months"
+    ExpiresByType image/jpg "access plus 3 months"
+    ExpiresByType image/jpeg "access plus 3 months"
+    ExpiresByType image/gif "access plus 3 months"
+    ExpiresByType image/svg+xml "access plus 3 months"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    # Fonts
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    
+    # HTML
+    ExpiresByType text/html "access plus 1 hour"
 </IfModule>
 
-# Compress files
+# Compress files untuk menghemat bandwidth
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/plain
     AddOutputFilterByType DEFLATE text/html
@@ -77,45 +115,84 @@ RewriteRule ^(.*)$ index.php [QSA,L]
     AddOutputFilterByType DEFLATE application/rss+xml
     AddOutputFilterByType DEFLATE application/javascript
     AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE text/javascript
 </IfModule>
 
-# Custom Error Pages (optional)
-ErrorDocument 404 /index.php
-ErrorDocument 403 /index.php
-ErrorDocument 500 /index.php
+# MIME Types untuk memastikan file dimuat dengan benar
+<IfModule mod_mime.c>
+    AddType text/css .css
+    AddType application/javascript .js
+    AddType image/svg+xml .svg
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+</IfModule>
 
 # Prevent directory browsing
 Options -Indexes
 
-# Allow CORS for API calls (jika diperlukan)
+# Custom Error Pages (redirect ke index.html)
+ErrorDocument 404 /index.html
+ErrorDocument 403 /index.html
+ErrorDocument 500 /index.html
+
+# CORS untuk API calls ke Google Apps Script
 <IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "*"
-    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    # Allow CORS untuk Google Apps Script
+    SetEnvIf Origin "^https://script\.google\.com$" CORS_ORIGIN=$0
+    SetEnvIf Origin "^https://script\.googleusercontent\.com$" CORS_ORIGIN=$0
+    
+    Header always set Access-Control-Allow-Origin "%{CORS_ORIGIN}e" env=CORS_ORIGIN
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    Header always set Access-Control-Allow-Credentials "true"
 </IfModule>
 
-# Handle OPTIONS requests for CORS
+# Handle preflight OPTIONS requests
 RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^(.*)$ index.php [QSA,L]
+RewriteRule ^(.*)$ $1 [R=200,L]
 
-# Pretty URLs (optional - untuk routing yang lebih bersih)
-# RewriteRule ^login/?$ index.php?page=login [QSA,L]
-# RewriteRule ^dashboard/?$ index.php?page=dashboard [QSA,L]
-# RewriteRule ^presensi/?$ index.php?page=presensi [QSA,L]
-# RewriteRule ^laporan/?$ index.php?page=laporan [QSA,L]
-# RewriteRule ^admin/?$ index.php?page=admin [QSA,L]
-# RewriteRule ^api/([^/]+)/?$ api.php?action=$1 [QSA,L]
+# Pretty URLs untuk SPA (Single Page Application)
+# Redirect semua request yang bukan file ke index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/assets/
+RewriteRule ^(.*)$ index.html [QSA,L]
 
-# File upload limits (sesuaikan dengan kebutuhan)
-php_value upload_max_filesize 10M
-php_value post_max_size 10M
-php_value max_execution_time 300
-php_value max_input_time 300
+# Specific rules untuk assets
+RewriteCond %{REQUEST_URI} ^/assets/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ - [R=404,L]
 
-# Session settings
-php_value session.cookie_httponly 1
-php_value session.cookie_secure 1
-php_value session.use_strict_mode 1
+# Browser caching dengan ETag
+<IfModule mod_headers.c>
+    # Remove ETag untuk static files yang sudah ada Expires
+    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$">
+        Header unset ETag
+        FileETag None
+    </FilesMatch>
+</IfModule>
 
-# Hide PHP version
+# Security: Hide server info
 ServerTokens Prod
+
+# Prevent access to backup files
+<FilesMatch "\.(bak|backup|old|orig|save|swp|tmp)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Prevent access to version control files
+<FilesMatch "^\.">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Force HTTPS (uncomment jika menggunakan SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Specific untuk sistem presensi BAZNAS
+# Redirect old URLs jika ada
+# RewriteRule ^login/?$ index.html#login [R=301,L]
+# RewriteRule ^dashboard/?$ index.html#dashboard [R=301,L]
+# RewriteRule ^admin/?$ index.html#admin [R=301,L]
