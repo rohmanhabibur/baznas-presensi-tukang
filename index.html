@@ -5,14 +5,142 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Presensi Digital BAZNAS Banyuwangi</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Custom Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes lightning {
+            0% { box-shadow: 0 0 0px rgba(0, 150, 255, 0.7); }
+            50% { box-shadow: 0 0 10px 5px rgba(0, 150, 255, 0.7), 0 0 20px 10px rgba(0, 150, 255, 0.5); }
+            100% { box-shadow: 0 0 0px rgba(0, 150, 255, 0.7); }
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        .pulse-animation { animation: pulse 2s infinite; }
+        .blink-animation { animation: blink 1s infinite; }
+        .lightning-animation { animation: lightning 1s infinite; }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #059669, #047857);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #047857, #065f46);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(5, 150, 105, 0.3);
+        }
+
+        .loading {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.hide {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOut {
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-hadir { background-color: #dcfce7; color: #166534; }
+        .status-izin { background-color: #fef3c7; color: #92400e; }
+        .status-sakit { background-color: #fee2e2; color: #991b1b; }
+        .status-alpha { background-color: #f3f4f6; color: #374151; }
+
+        .location-info {
+            background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+            border-left: 4px solid #0284c7;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #f8fafc, #ffffff);
+            border: 1px solid #e2e8f0;
+        }
+
+        .hidden { display: none !important; }
+        .block { display: block !important; }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .container-mobile {
+                padding: 1rem;
+            }
+
+            .card-mobile {
+                margin: 0.5rem 0;
+            }
+
+            .text-mobile {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; }
+        }
+    </style>
     <script src="script.js" defer></script>
 </head>
 <body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
     <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
     <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md fade-in card-hover">
+        <div id="loginCard" class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md fade-in card-hover">
             <div class="text-center mb-8">
                 <div class="bg-gradient-to-br from-green-600 to-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                     <span class="text-white text-2xl font-bold">B</span>
@@ -20,13 +148,13 @@
                 <h1 class="text-2xl font-bold text-gray-800">BAZNAS Banyuwangi</h1>
                 <p class="text-gray-600 mt-2">Sistem Presensi Digital Tukang</p>
             </div>
-            
+
             <div class="space-y-4">
                 <div>
                     <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
                     <input type="text" id="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Masukkan username" autocomplete="username">
                 </div>
-                
+
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
                     <div class="relative">
@@ -36,65 +164,10 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <button onclick="login()" id="loginBtn" class="btn-primary w-full text-white py-3 rounded-lg font-medium transition-all flex items-center justify-center">
                     <span id="loginText">Masuk</span>
                     <div id="loginLoading" class="loading ml-2 hidden"></div>
-                </button>
-            </div>
-            
-            <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
-                <h3 class="font-semibold text-blue-800 mb-2">⚙️ Konfigurasi Sistem</h3>
-                <div class="text-sm text-blue-700 space-y-1">
-                    <p><strong>Status API:</strong> <span id="apiStatus" class="text-orange-600">Belum Terkonfigurasi</span></p>
-                    <p><strong>Mode:</strong> <span id="currentMode" class="text-blue-600">Online</span></p>
-                    <p><strong>Version:</strong> v2.3</p>
-                </div>
-                
-                <div class="mt-3 flex space-x-2">
-                    <button onclick="testConnection()" class="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-                        Test Koneksi
-                    </button>
-                    <button onclick="showConfig()" class="text-xs bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">
-                        Konfigurasi
-                    </button>
-                </div>
-            </div>
-            
-            <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p class="text-xs text-gray-600 mb-2">Demo Accounts:</p>
-                <div class="text-xs text-gray-500 space-y-1">
-                    <p><strong>Admin:</strong> admin / admin123</p>
-                    <p><strong>Tukang:</strong> tukang1 / pass123</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="configModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">⚙️ Konfigurasi API</h3>
-            
-            <div class="space-y-4">
-                <div>
-                    <label for="apiUrlInput" class="block text-sm font-medium text-gray-700 mb-2">Google Apps Script URL:</label>
-                    <input type="text" id="apiUrlInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                           placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
-                    <p class="text-xs text-gray-500 mt-1">URL Web App dari Google Apps Script</p>
-                </div>
-                
-                <div class="flex items-center">
-                    <input type="checkbox" id="offlineMode" class="mr-2">
-                    <label for="offlineMode" class="text-sm text-gray-700">Mode Offline (LocalStorage)</label>
-                </div>
-            </div>
-            
-            <div class="flex space-x-3 mt-6">
-                <button onclick="saveConfig()" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
-                    Simpan
-                </button>
-                <button onclick="closeConfig()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
-                    Batal
                 </button>
             </div>
         </div>
@@ -113,8 +186,11 @@
                             <p class="text-xs text-gray-600" id="userInfo">Loading...</p>
                         </div>
                     </div>
-                    
+
                     <div class="flex items-center space-x-2">
+                        <span id="connectionStatus" class="inline-block" title="Anda terhubung online">
+                            ⚡️
+                        </span>
                         <button onclick="syncData()" id="syncBtn" class="p-2 text-gray-600 hover:text-green-600 transition-colors" title="Sinkronisasi Data">
                             <span id="syncIcon">🔄</span>
                         </button>
@@ -168,9 +244,9 @@
 
                 <div id="presensiForm" class="bg-white rounded-lg shadow-lg p-6 mb-6 tukang-only">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">📋 Presensi Hari Ini</h2>
-                    
+
                     <div id="todayPresensiStatus" class="mb-4"></div>
-                    
+
                     <div class="space-y-4">
                         <div class="location-info p-4 rounded-lg">
                             <h3 class="font-medium text-blue-800 mb-2">📍 Informasi Lokasi</h3>
@@ -178,7 +254,7 @@
                                 <p>Mengambil lokasi...</p>
                             </div>
                         </div>
-                        
+
                         <div class="flex space-x-3">
                             <button onclick="clockIn()" id="clockInBtn" class="flex-1 bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors">
                                 ⏰ Masuk
@@ -197,7 +273,7 @@
                             🔄 Refresh
                         </button>
                     </div>
-                    
+
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
@@ -224,7 +300,7 @@
             <div id="laporanTab" class="tab-content hidden">
                 <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">📊 Filter Laporan</h2>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="startDate" class="block text-sm font-medium text-gray-700 mb-2">Dari Tanggal</label>
@@ -241,7 +317,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="flex space-x-3">
                         <button onclick="generateReport()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
                             📊 Generate Laporan
@@ -257,7 +333,7 @@
 
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">📈 Hasil Laporan</h2>
-                    
+
                     <div id="reportSummary" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 hidden">
                         <div class="stats-card p-4 rounded-lg">
                             <div class="text-2xl font-bold text-green-600" id="reportTotalHadir">0</div>
@@ -276,7 +352,7 @@
                             <div class="text-sm text-gray-600">Total Alpha</div>
                         </div>
                     </div>
-                    
+
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
@@ -309,7 +385,7 @@
                             ➕ Tambah Tukang
                         </button>
                     </div>
-                    
+
                     <div id="addTukangForm" class="hidden mb-6 p-4 bg-gray-50 rounded-lg">
                         <h3 class="font-semibold text-gray-800 mb-4">Tambah Tukang Baru</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -343,7 +419,7 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
@@ -394,7 +470,7 @@
                                 <span id="totalRecords" class="font-medium">0</span>
                             </div>
                         </div>
-                        
+
                         <div class="mt-4 pt-4 border-t">
                             <button onclick="fullSync()" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 mb-2">
                                 🔄 Full Sync
@@ -417,7 +493,7 @@
 
                 <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">🗄️ Manajemen Database</h2>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="stats-card p-4 rounded-lg">
                             <div class="text-2xl font-bold text-blue-600" id="dbPresensiCount">0</div>
@@ -432,7 +508,7 @@
                             <div class="text-sm text-gray-600">Log Aktivitas</div>
                         </div>
                     </div>
-                    
+
                     <div class="flex space-x-3 mt-4">
                         <button onclick="backupData()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
                             💾 Backup Data

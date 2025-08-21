@@ -7,7 +7,7 @@ let allPresensiData = [];
 let allTukangData = [];
 
 // Configuration
-const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyjaCRYb3SEoP61rDtAAWYXvrmC1SKlmUzCD3S5He8/dev';
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyxTUGlAOeimhM_TmdCC9Ie0TyJBPgAD_6ir3ZpAjheVZsSu56CPGXbcVvRTXrVVcs/exec';
 const CONFIG = {
     API_URL: localStorage.getItem('apiUrl') || DEFAULT_API_URL,
     OFFLINE_MODE: localStorage.getItem('offlineMode') === 'true',
@@ -24,7 +24,7 @@ const CONFIG = {
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Sistem Presensi v2.3 - Initializing...');
-    
+
     // Check if user is already logged in
     const savedUser = localStorage.getItem(CONFIG.STORAGE_KEYS.USER);
     if (savedUser) {
@@ -37,23 +37,23 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.removeItem(CONFIG.STORAGE_KEYS.USER);
         }
     }
-    
+
     // Initialize geolocation
     initializeLocation();
-    
+
     // Set default dates
     const today = new Date();
     const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
+
     document.getElementById('startDate').value = oneWeekAgo.toISOString().split('T')[0];
     document.getElementById('endDate').value = today.toISOString().split('T')[0];
     
-    // Update API status
-    updateApiStatus();
-    
+    // Check API connection on load
+    testConnection();
+
     // Load offline data if available
     loadOfflineData();
-    
+
     console.log('✅ Initialization complete');
 });
 
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function togglePassword() {
     const passwordInput = document.getElementById('password');
     const toggleIcon = document.getElementById('passwordToggleIcon');
-    
+
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
         toggleIcon.textContent = '🙈';
@@ -74,14 +74,14 @@ function togglePassword() {
 async function login() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
-    
+
     if (!username || !password) {
         showToast('Username dan password harus diisi', 'error');
         return;
     }
-    
+
     setLoading('login', true);
-    
+
     try {
         // Try online login first
         if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
@@ -90,14 +90,14 @@ async function login() {
                 password: password,
                 userType: 'admin' // Try admin first
             });
-            
+
             if (result.success) {
                 currentUser = {
                     ...result.data.user,
                     userType: result.data.userType
                 };
                 currentUserType = result.data.userType;
-                
+
                 localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(currentUser));
                 showToast('Login berhasil!', 'success');
                 showDashboard();
@@ -109,14 +109,14 @@ async function login() {
                     password: password,
                     userType: 'tukang'
                 });
-                
+
                 if (tukangResult.success) {
                     currentUser = {
                         ...tukangResult.data.user,
                         userType: tukangResult.data.userType
                     };
                     currentUserType = tukangResult.data.userType;
-                    
+
                     localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(currentUser));
                     showToast('Login berhasil!', 'success');
                     showDashboard();
@@ -124,7 +124,7 @@ async function login() {
                 }
             }
         }
-        
+
         // Fallback to offline/demo login
         if (offlineLogin(username, password)) {
             showToast('Login berhasil (Mode Offline)', 'success');
@@ -132,10 +132,10 @@ async function login() {
         } else {
             showToast('Username atau password salah', 'error');
         }
-        
+
     } catch (error) {
         console.error('Login error:', error);
-        
+
         // Try offline login as fallback
         if (offlineLogin(username, password)) {
             showToast('Login berhasil (Mode Offline)', 'warning');
@@ -155,7 +155,7 @@ function offlineLogin(username, password) {
         'tukang1': { password: 'pass123', type: 'tukang', name: 'Ahmad Tukang', id: 'T001' },
         'tukang2': { password: 'pass123', type: 'tukang', name: 'Budi Tukang', id: 'T002' }
     };
-    
+
     const account = demoAccounts[username];
     if (account && account.password === password) {
         currentUser = {
@@ -166,11 +166,11 @@ function offlineLogin(username, password) {
             email: account.email || ''
         };
         currentUserType = account.type;
-        
+
         localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(currentUser));
         return true;
     }
-    
+
     return false;
 }
 
@@ -180,14 +180,14 @@ function logout() {
         currentUser = null;
         currentUserType = null;
         todayPresensi = null;
-        
+
         document.getElementById('dashboard').classList.add('hidden');
         document.getElementById('loginPage').classList.remove('hidden');
-        
+
         // Reset form
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
-        
+
         showToast('Berhasil keluar', 'success');
     }
 }
@@ -196,11 +196,11 @@ function logout() {
 function showDashboard() {
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('dashboard').classList.remove('hidden');
-    
+
     // Update user info
     const userInfo = document.getElementById('userInfo');
     userInfo.textContent = `${currentUser.name} (${currentUserType === 'admin' ? 'Administrator' : 'Tukang'})`;
-    
+
     // Show/hide admin-only elements
     const adminElements = document.querySelectorAll('.admin-only');
     adminElements.forEach(el => {
@@ -210,7 +210,7 @@ function showDashboard() {
             el.classList.add('hidden');
         }
     });
-    
+
     // Show/hide tukang-only elements
     const tukangElements = document.querySelectorAll('.tukang-only');
     tukangElements.forEach(el => {
@@ -220,10 +220,10 @@ function showDashboard() {
             el.classList.add('hidden');
         }
     });
-    
+
     // Load initial data
     loadDashboardData();
-    
+
     // Show default tab
     showTab('presensi');
 }
@@ -232,16 +232,16 @@ async function loadDashboardData() {
     try {
         // Load presensi data
         await loadPresensiData();
-        
+
         // Load tukang data for admin
         if (currentUserType === 'admin') {
             await loadTukangData();
             await loadActivities();
         }
-        
+
         // Update stats
         updateStats();
-        
+
         // Check today's presensi for tukang
         if (currentUserType === 'tukang') {
             checkTodayPresensi();
@@ -257,24 +257,24 @@ function showTab(tabName) {
     // Hide all tabs
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => tab.classList.add('hidden'));
-    
+
     // Remove active class from all tab buttons
     const tabButtons = document.querySelectorAll('.tab-button');
     tabButtons.forEach(btn => {
         btn.classList.remove('border-green-500', 'text-green-600');
         btn.classList.add('border-transparent', 'text-gray-500');
     });
-    
+
     // Show selected tab
     document.getElementById(tabName + 'Tab').classList.remove('hidden');
-    
+
     // Add active class to selected tab button
     const activeButton = document.getElementById('tab-' + tabName);
     if (activeButton) {
         activeButton.classList.remove('border-transparent', 'text-gray-500');
         activeButton.classList.add('border-green-500', 'text-green-600');
     }
-    
+
     // Load tab-specific data
     switch(tabName) {
         case 'presensi':
@@ -339,12 +339,12 @@ async function clockIn() {
         initializeLocation();
         return;
     }
-    
+
     if (todayPresensi && todayPresensi.jamMasuk) {
         showToast('Anda sudah melakukan presensi masuk hari ini', 'warning');
         return;
     }
-    
+
     const now = new Date();
     const timeString = now.toLocaleTimeString('id-ID');
     const dateString = now.toLocaleDateString('id-ID');
@@ -376,13 +376,13 @@ async function clockIn() {
             savePresensiOffline(presensiData);
             showToast('Presensi masuk berhasil dicatat (Offline)!', 'success');
         }
-        
+
         todayPresensi = presensiData;
         updatePresensiStatus();
         refreshPresensi();
     } catch (error) {
         console.error('Clock in error:', error);
-        
+
         // Fallback to offline save
         savePresensiOffline(presensiData);
         todayPresensi = presensiData;
@@ -397,12 +397,12 @@ async function clockOut() {
         showToast('Anda belum melakukan presensi masuk', 'warning');
         return;
     }
-    
+
     if (todayPresensi.jamKeluar) {
         showToast('Anda sudah melakukan presensi keluar hari ini', 'warning');
         return;
     }
-    
+
     const now = new Date();
     const timeString = now.toLocaleTimeString('id-ID');
 
@@ -423,14 +423,14 @@ async function clockOut() {
             updatePresensiOffline(todayPresensi.id, { jamKeluar: timeString });
             showToast('Presensi keluar berhasil dicatat (Offline)!', 'success');
         }
-        
+
         todayPresensi.jamKeluar = timeString;
         todayPresensi.updatedAt = now.toISOString();
         updatePresensiStatus();
         refreshPresensi();
     } catch (error) {
         console.error('Clock out error:', error);
-        
+
         // Fallback to offline update
         updatePresensiOffline(todayPresensi.id, { jamKeluar: timeString });
         todayPresensi.jamKeluar = timeString;
@@ -452,7 +452,7 @@ function updatePresensiStatus() {
     const statusDiv = document.getElementById('todayPresensiStatus');
     const clockInBtn = document.getElementById('clockInBtn');
     const clockOutBtn = document.getElementById('clockOutBtn');
-    
+
     if (!todayPresensi) {
         statusDiv.innerHTML = `
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -505,9 +505,9 @@ function updateTodayAttendanceList() {
     const tbody = document.getElementById('todayAttendanceList');
     const today = new Date().toLocaleDateString('id-ID');
     const todayData = allPresensiData.filter(p => p.date === today);
-    
+
     tbody.innerHTML = '';
-    
+
     if (todayData.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -518,13 +518,13 @@ function updateTodayAttendanceList() {
         `;
         return;
     }
-    
+
     todayData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    
+
     todayData.forEach(p => {
         const row = document.createElement('tr');
         row.classList.add('border-b');
-        
+
         let statusClass = '';
         if (p.status === 'Hadir') {
             statusClass = 'status-hadir';
@@ -535,7 +535,7 @@ function updateTodayAttendanceList() {
         } else {
             statusClass = 'status-alpha';
         }
-        
+
         row.innerHTML = `
             <td class="py-2 px-3 text-sm text-gray-700">${p.nama}</td>
             <td class="py-2 px-3 text-sm text-gray-700">${p.jamMasuk || '-'}</td>
@@ -552,12 +552,12 @@ function updateTodayAttendanceList() {
 function updateStats() {
     const today = new Date().toLocaleDateString('id-ID');
     const todayData = allPresensiData.filter(p => p.date === today);
-    
+
     const presentCount = todayData.filter(p => p.status === 'Hadir' || p.status === 'Izin' || p.status === 'Sakit').length;
     const totalTukang = allTukangData.length;
     const absentCount = totalTukang - presentCount;
     const lateCount = todayData.filter(p => p.status === 'Hadir' && p.jamMasuk && p.jamMasuk.split(':')[0] > '08').length;
-    
+
     document.getElementById('todayPresent').textContent = presentCount;
     document.getElementById('totalTukang').textContent = totalTukang;
     document.getElementById('lateToday').textContent = lateCount;
@@ -580,7 +580,7 @@ async function generateReport() {
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
     const tukangId = document.getElementById('tukangFilter').value;
-    
+
     if (!startDate || !endDate) {
         showToast('Pilih tanggal awal dan akhir untuk laporan', 'warning');
         return;
@@ -588,23 +588,23 @@ async function generateReport() {
 
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     if (start > end) {
         showToast('Tanggal awal tidak boleh lebih dari tanggal akhir', 'error');
         return;
     }
-    
+
     try {
         // Fetch all data for the date range
         const allData = await loadPresensiData();
-        
+
         const filteredData = allData.filter(p => {
             const recordDate = new Date(p.date.split('/').reverse().join('-')); // Format: dd/mm/yyyy to yyyy-mm-dd
             const matchDate = recordDate >= start && recordDate <= end;
             const matchTukang = !tukangId || p.tukangId === tukangId;
             return matchDate && matchTukang;
         });
-        
+
         updateReportTable(filteredData);
         updateReportSummary(filteredData);
         showToast('Laporan berhasil dibuat', 'success');
@@ -616,7 +616,7 @@ async function generateReport() {
 
 function updateReportSummary(data) {
     document.getElementById('reportSummary').classList.remove('hidden');
-    
+
     const hadircount = data.filter(p => p.status === 'Hadir').length;
     const izinCount = data.filter(p => p.status === 'Izin').length;
     const sakitCount = data.filter(p => p.status === 'Sakit').length;
@@ -631,7 +631,7 @@ function updateReportSummary(data) {
 function updateReportTable(data) {
     const tbody = document.getElementById('reportTableBody');
     tbody.innerHTML = '';
-    
+
     if (data.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -642,16 +642,16 @@ function updateReportTable(data) {
         `;
         return;
     }
-    
+
     data.forEach(p => {
         const row = document.createElement('tr');
         row.classList.add('border-b');
-        
+
         let duration = '-';
         if (p.jamMasuk && p.jamKeluar) {
             duration = calculateDuration(p.jamMasuk, p.jamKeluar);
         }
-        
+
         let statusClass = '';
         if (p.status === 'Hadir') {
             statusClass = 'status-hadir';
@@ -702,7 +702,7 @@ async function addTukang() {
         showToast('Nama, username, dan password harus diisi', 'error');
         return;
     }
-    
+
     const newTukang = {
         id: 'T' + Date.now(),
         nama: name,
@@ -713,7 +713,7 @@ async function addTukang() {
         status: 'Aktif',
         createdAt: new Date().toISOString()
     };
-    
+
     try {
         // Try to save online
         if (CONFIG.API_URL && !CONFIG.OFFLINE_MODE) {
@@ -728,7 +728,7 @@ async function addTukang() {
             saveTukangOffline(newTukang);
             showToast('Tukang berhasil ditambahkan (Offline)!', 'success');
         }
-        
+
         await loadTukangData();
         hideAddTukangForm();
     } catch (error) {
@@ -763,7 +763,7 @@ async function loadTukangData() {
 function updateTukangTable() {
     const tbody = document.getElementById('tukangTableBody');
     tbody.innerHTML = '';
-    
+
     if (allTukangData.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -774,7 +774,7 @@ function updateTukangTable() {
         `;
         return;
     }
-    
+
     allTukangData.forEach(tukang => {
         const row = document.createElement('tr');
         row.classList.add('border-b');
@@ -836,7 +836,7 @@ async function loadAdminData() {
             const tukangCount = (await apiCall('GET_TUKANG_COUNT')).data.count;
             const activityCount = (await apiCall('GET_ACTIVITY_COUNT')).data.count;
             const recentActivities = (await apiCall('GET_RECENT_ACTIVITIES')).data.activities;
-            
+
             document.getElementById('dbPresensiCount').textContent = presensiCount;
             document.getElementById('dbTukangCount').textContent = tukangCount;
             document.getElementById('dbActivityCount').textContent = activityCount;
@@ -853,12 +853,12 @@ async function loadAdminData() {
 function updateRecentActivities(activities) {
     const container = document.getElementById('recentActivities');
     container.innerHTML = '';
-    
+
     if (activities.length === 0) {
         container.innerHTML = `<div class="text-center text-gray-500 py-4">Tidak ada aktivitas terbaru</div>`;
         return;
     }
-    
+
     activities.forEach(activity => {
         const item = document.createElement('div');
         item.classList.add('p-3', 'bg-gray-50', 'rounded-lg', 'border', 'border-gray-200');
@@ -877,21 +877,21 @@ async function fullSync() {
         if (!CONFIG.API_URL || CONFIG.OFFLINE_MODE) {
             throw new Error('Sync hanya bisa dilakukan dalam mode online');
         }
-        
+
         const localPresensi = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.PRESENSI)) || [];
         const localTukang = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.TUKANG)) || [];
-        
+
         // Send local data to server
         await apiCall('SYNC_DATA', {
             presensi: localPresensi,
             tukang: localTukang
         });
-        
+
         // Fetch fresh data from server
         await loadPresensiData();
         await loadTukangData();
         await loadActivities();
-        
+
         localStorage.setItem(CONFIG.STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
         showToast('Sinkronisasi berhasil!', 'success');
     } catch (error) {
@@ -948,7 +948,7 @@ function showToast(message, type = 'info') {
     const toastContainer = document.getElementById('toastContainer');
     const toast = document.createElement('div');
     toast.classList.add('toast', 'p-4', 'rounded-lg', 'shadow-lg', 'text-white', 'font-medium', 'flex', 'items-center', 'space-x-2');
-    
+
     switch(type) {
         case 'success':
             toast.classList.add('bg-green-500');
@@ -967,9 +967,9 @@ function showToast(message, type = 'info') {
             toast.innerHTML = '<span>ℹ️</span> ' + message;
             break;
     }
-    
+
     toastContainer.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.classList.add('hide');
         setTimeout(() => toast.remove(), 300);
@@ -980,7 +980,7 @@ function setLoading(elementId, isLoading) {
     const btn = document.getElementById(elementId + 'Btn');
     const text = document.getElementById(elementId + 'Text');
     const loading = document.getElementById(elementId + 'Loading');
-    
+
     if (btn && text && loading) {
         btn.disabled = isLoading;
         if (isLoading) {
@@ -997,15 +997,15 @@ async function apiCall(action, data = {}) {
     if (!CONFIG.API_URL) {
         throw new Error('URL API belum dikonfigurasi. Silakan atur di Pengaturan.');
     }
-    
+
     const url = `${CONFIG.API_URL}?action=${action}`;
-    
+
     const options = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     };
-    
+
     try {
         const response = await fetch(url, options);
         const result = await response.json();
@@ -1016,6 +1016,35 @@ async function apiCall(action, data = {}) {
     } catch (error) {
         console.error('API call failed:', error);
         throw new Error('Koneksi ke server gagal. Cek URL API atau jaringan Anda.');
+    }
+}
+
+async function testConnection() {
+    const loginCard = document.getElementById('loginCard');
+    const connectionStatusIcon = document.getElementById('connectionStatus');
+
+    if (CONFIG.OFFLINE_MODE) {
+        loginCard.classList.remove('lightning-animation');
+        if (connectionStatusIcon) connectionStatusIcon.classList.remove('blink-animation');
+        return;
+    }
+    
+    // Check if the URL is configured and not the default placeholder
+    if (!CONFIG.API_URL || CONFIG.API_URL === DEFAULT_API_URL) {
+        loginCard.classList.remove('lightning-animation');
+        if (connectionStatusIcon) connectionStatusIcon.classList.remove('blink-animation');
+        return;
+    }
+
+    try {
+        await apiCall('GET_TUKANG_COUNT');
+        loginCard.classList.add('lightning-animation');
+        if (connectionStatusIcon) connectionStatusIcon.classList.add('blink-animation');
+        console.log('API connection successful.');
+    } catch (error) {
+        console.error('API connection failed:', error);
+        loginCard.classList.remove('lightning-animation');
+        if (connectionStatusIcon) connectionStatusIcon.classList.remove('blink-animation');
     }
 }
 
@@ -1079,48 +1108,6 @@ async function loadActivities() {
     // Placeholder for future activity log loading
 }
 
-function updateApiStatus(isOnline = false) {
-    const statusElement = document.getElementById('apiStatus');
-    const adminStatusElement = document.getElementById('adminApiStatus');
-    const modeElement = document.getElementById('currentMode');
-    const adminModeElement = document.getElementById('adminCurrentMode');
-    
-    if (CONFIG.OFFLINE_MODE) {
-        statusElement.textContent = 'Offline (Lokal)';
-        statusElement.classList.remove('text-green-600', 'text-orange-600');
-        statusElement.classList.add('text-red-600');
-        if (adminStatusElement) {
-             adminStatusElement.textContent = 'Offline (Lokal)';
-             adminStatusElement.classList.remove('text-green-600', 'text-orange-600');
-             adminStatusElement.classList.add('text-red-600');
-        }
-        modeElement.textContent = 'Offline';
-        adminModeElement.textContent = 'Offline';
-    } else {
-        if (isOnline) {
-            statusElement.textContent = 'Online';
-            statusElement.classList.remove('text-orange-600', 'text-red-600');
-            statusElement.classList.add('text-green-600');
-            if (adminStatusElement) {
-                adminStatusElement.textContent = 'Online';
-                adminStatusElement.classList.remove('text-orange-600', 'text-red-600');
-                adminStatusElement.classList.add('text-green-600');
-            }
-        } else {
-            statusElement.textContent = 'Terputus';
-            statusElement.classList.remove('text-green-600', 'text-red-600');
-            statusElement.classList.add('text-orange-600');
-            if (adminStatusElement) {
-                adminStatusElement.textContent = 'Terputus';
-                adminStatusElement.classList.remove('text-green-600', 'text-red-600');
-                adminStatusElement.classList.add('text-orange-600');
-            }
-        }
-        modeElement.textContent = 'Online';
-        adminModeElement.textContent = 'Online';
-    }
-}
-
 function updateAdminData() {
     // This function is for updating admin data without a full reload
     if (currentUserType === 'admin') {
@@ -1131,17 +1118,17 @@ function updateAdminData() {
 function calculateDuration(startTime, endTime) {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
-    
+
     const startDate = new Date();
     startDate.setHours(startHour, startMinute, 0);
-    
+
     const endDate = new Date();
     endDate.setHours(endHour, endMinute, 0);
-    
+
     const diff = endDate - startDate;
-    
+
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     return `${hours}j ${minutes}m`;
 }
