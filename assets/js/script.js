@@ -5,11 +5,11 @@ let currentLocation = null;
 let todayPresensi = null;
 let allPresensiData = [];
 let allTukangData = [];
-let isOnlineMode = true;
 
 // Configuration
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwaBeM5U31BblFtCte3EdUOQZT0zQQOWEYEmEEGHegCuXs9w0EM8g82XA9790O8y-ch/exec';
 const CONFIG = {
-    API_URL: localStorage.getItem('apiUrl') || '',
+    API_URL: localStorage.getItem('apiUrl') || DEFAULT_API_URL,
     OFFLINE_MODE: localStorage.getItem('offlineMode') === 'true',
     VERSION: '2.3',
     STORAGE_KEYS: {
