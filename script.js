@@ -7,7 +7,7 @@ let allPresensiData = [];
 let allTukangData = [];
 
 // Configuration
-const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyxTUGlAOeimhM_TmdCC9Ie0TyJBPgAD_6ir3ZpAjheVZsSu56CPGXbcVvRTXrVVcs/exec';
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwVtLBaXUQx1cryLZIrnYikvjeH1IqplbGwPVW1oBdxM5MZZGKlD9mO_TnmGk2r6-Wk/exec';
 const CONFIG = {
     API_URL: localStorage.getItem('apiUrl') || DEFAULT_API_URL,
     OFFLINE_MODE: localStorage.getItem('offlineMode') === 'true',
