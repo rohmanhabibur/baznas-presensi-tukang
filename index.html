@@ -6,9 +6,14 @@
     <title>Sistem Presensi Tukang - BAZNAS Banyuwangi</title>
     <meta name="description" content="Sistem Presensi Digital untuk Tukang BAZNAS Banyuwangi">
     <meta name="theme-color" content="#059669">
+    <link rel="icon" href="assets/img/favicon.ico" type="image/x-icon">
     
-    <!-- External Libraries -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <noscript>
+        <link rel="stylesheet" href="assets/css/tailwind-fallback.css">
+    </noscript>
+    <!-- Eksternal Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
@@ -17,65 +22,63 @@
 </head>
 <body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
     <!-- Toast Container -->
-    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2" aria-live="polite"></div>
 
     <!-- Login Page -->
-    <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md fade-in card-hover">
+    <main id="loginPage" class="min-h-screen flex items-center justify-center p-4" aria-label="Halaman Login">
+        <section class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md fade-in card-hover" aria-labelledby="baznas-title">
             <div class="text-center mb-8">
                 <div class="bg-gradient-to-br from-green-600 to-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <span class="text-white text-2xl font-bold">B</span>
+                    <span class="text-white text-2xl font-bold" aria-hidden="true">B</span>
                 </div>
-                <h1 class="text-2xl font-bold text-gray-800">BAZNAS Banyuwangi</h1>
+                <h1 id="baznas-title" class="text-2xl font-bold text-gray-800">BAZNAS Banyuwangi</h1>
                 <p class="text-gray-600 mt-2">Sistem Presensi Digital Tukang</p>
             </div>
             
-            <div class="space-y-4">
+            <form class="space-y-4" onsubmit="login(); return false;" autocomplete="on">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                    <input type="text" id="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Masukkan username" autocomplete="username">
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Masukkan username" autocomplete="username" required>
                 </div>
-                
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
                     <div class="relative">
-                        <input type="password" id="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12" placeholder="Masukkan password" autocomplete="current-password">
-                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <input type="password" id="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12" placeholder="Masukkan password" autocomplete="current-password" required>
+                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" aria-label="Tampilkan Password">
                             <span id="passwordToggleIcon">👁️</span>
                         </button>
                     </div>
                 </div>
-                
-                <button onclick="login()" id="loginBtn" class="btn-primary w-full text-white py-3 rounded-lg font-medium transition-all flex items-center justify-center">
+                <button type="submit" id="loginBtn" class="btn-primary w-full text-white py-3 rounded-lg font-medium transition-all flex items-center justify-center">
                     <span id="loginText">Masuk</span>
-                    <div id="loginLoading" class="loading ml-2 hidden"></div>
+                    <div id="loginLoading" class="loading ml-2 hidden" aria-hidden="true"></div>
                 </button>
-            </div>
+            </form>
             
             <!-- Configuration Info -->
-            <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
+            <aside class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200" aria-label="Konfigurasi Sistem">
                 <h3 class="font-semibold text-blue-800 mb-2 flex items-center">
                     <span class="mr-2">⚙️</span>
                     Konfigurasi Sistem
                 </h3>
-                <div class="text-xs text-gray-700 space-y-1">
-                    <p><strong>📊 Google Sheets:</strong> Dikonfigurasi melalui environment variables (.env)</p>
-                    <p><strong>🗂️ Struktur Sheets:</strong> Admin, Tukang, Presensi, Settings</p>
-                    <p><strong>🔐 Default Login:</strong> admin / admin123</p>
-                    <p><strong>⏰ Auto Close:</strong> Presensi keluar otomatis jam 16:00</p>
-                    <p><strong>🔧 Setup:</strong> Hubungi administrator untuk konfigurasi</p>
-                </div>
-            </div>
-        </div>
-    </div>
+                <ul class="text-xs text-gray-700 space-y-1 list-disc list-inside">
+                    <li><strong>📊 Google Sheets:</strong> Dikonfigurasi melalui environment variables (.env)</li>
+                    <li><strong>🗂️ Struktur Sheets:</strong> Admin, Tukang, Presensi, Settings</li>
+                    <li><strong>🔐 Default Login:</strong> admin / admin123</li>
+                    <li><strong>⏰ Auto Close:</strong> Presensi keluar otomatis jam 16:00</li>
+                    <li><strong>🔧 Setup:</strong> Hubungi administrator untuk konfigurasi</li>
+                </ul>
+            </aside>
+        </section>
+    </main>
 
     <!-- Admin Dashboard -->
-    <div id="adminPage" class="hidden min-h-screen">
+    <div id="adminPage" class="hidden min-h-screen" aria-label="Admin Dashboard">
         <!-- Admin content will be loaded here -->
     </div>
 
     <!-- Tukang Dashboard -->
-    <div id="tukangPage" class="hidden min-h-screen">
+    <div id="tukangPage" class="hidden min-h-screen" aria-label="Tukang Dashboard">
         <!-- Tukang content will be loaded here -->
     </div>
 
@@ -90,5 +93,5 @@
     <script src="assets/js/admin.js"></script>
     <script src="assets/js/tukang.js"></script>
     <script src="assets/js/main.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9726d7d8b4d5fe01',t:'MTc1NTc0NDgzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
